@@ -4,16 +4,33 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-import torch
-from torch import nn
+if TYPE_CHECKING:
+    import torch
+    from torch import nn
+else:
+    try:
+        import torch
+        from torch import nn
+    except ImportError:
+        torch = None
+
+        class _MissingNN:
+            class Module:
+                pass
+
+        nn = _MissingNN()
 
 
 class ECALayer(nn.Module):
     """Efficient Channel Attention for convolutional feature maps."""
 
     def __init__(self, channels: int, kernel_size: int = 3) -> None:
+        if torch is None:
+            raise RuntimeError(
+                "PyTorch is required for ECALayer. Run `conda env create -f environment.yml`."
+            )
         super().__init__()
         if kernel_size % 2 == 0:
             raise ValueError("ECA kernel_size must be odd.")
@@ -27,7 +44,7 @@ class ECALayer(nn.Module):
         )
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: "torch.Tensor") -> "torch.Tensor":
         weights = self.avg_pool(x).squeeze(-1).transpose(-1, -2)
         weights = self.conv(weights).transpose(-1, -2).unsqueeze(-1)
         return x * self.sigmoid(weights)
@@ -42,6 +59,11 @@ class EfficientNetV2ECA(nn.Module):
         pretrained: bool = True,
         use_eca: bool = True,
     ) -> None:
+        if torch is None:
+            raise RuntimeError(
+                "PyTorch is required for EfficientNetV2ECA. "
+                "Run `conda env create -f environment.yml`."
+            )
         super().__init__()
         from torchvision.models import EfficientNet_V2_S_Weights, efficientnet_v2_s
 
@@ -57,7 +79,7 @@ class EfficientNetV2ECA(nn.Module):
             nn.BatchNorm1d(embedding_dim),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: "torch.Tensor") -> "torch.Tensor":
         x = self.features(x)
         x = self.eca(x)
         x = self.pool(x)
@@ -105,4 +127,3 @@ def train_yolov11(config: DetectorConfig) -> Any:
 def validate_yolov11(weights: str | Path, data: str | Path, device: str = "0") -> Any:
     model = load_yolov11(str(weights))
     return model.val(data=str(data), device=device)
-

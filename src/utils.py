@@ -9,11 +9,21 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import torch
 import yaml
 
 
 def check_environment() -> dict[str, Any]:
+    try:
+        import torch
+    except ImportError:
+        return {
+            "python_torch": None,
+            "cuda_available": False,
+            "cuda_device_count": 0,
+            "cuda_device_name": None,
+            "error": "PyTorch is not installed in the active environment.",
+        }
+
     return {
         "python_torch": torch.__version__,
         "cuda_available": torch.cuda.is_available(),
@@ -93,4 +103,3 @@ def plot_metric_csv(csv_path: str | Path, output_path: str | Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output, dpi=200)
     plt.close()
-
