@@ -1,0 +1,27 @@
+name: deep_learning_project
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pytorch>=2.2
+  - torchvision>=0.17
+  - torchaudio
+  - pytorch-cuda=12.1
+  - scikit-learn
+  - opencv
+  - matplotlib
+  - seaborn
+  - pandas
+  - pyyaml
+  - tqdm
+  - pip:
+      - ultralytics>=8.3
+      - boxmot>=13.0
+      - lapx
+      - tensorboard
+      - streamlit
+      - motmetrics

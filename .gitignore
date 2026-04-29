@@ -1,0 +1,44 @@
+# Datasets and large generated artifacts
+dataset/cholecTrack20/*
+dataset/annotations/*
+!dataset/cholecTrack20/.gitkeep
+!dataset/annotations/.gitkeep
+*.zip
+*.tar
+*.tar.gz
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Training outputs
+runs/
+results/logs/*
+results/weights/*
+!results/logs/.gitkeep
+!results/weights/.gitkeep
+*.log
+*.tmp
+
+# Python/cache artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Environments and local config
+env/
+venv/
+.venv/
+*.env
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
