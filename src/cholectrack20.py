@@ -32,6 +32,7 @@ class ConversionSummary:
     images: int
     labels: int
     objects: int
+    skipped_frames: int
 
 
 def _video_json(video_dir: Path) -> Path:
@@ -117,6 +118,7 @@ def convert_dataset(source: str | Path, out: str | Path) -> list[ConversionSumma
         image_count = 0
         label_count = 0
         object_count = 0
+        skipped_frames = 0
 
         for video_dir in video_dirs:
             dataset = _load_json(_video_json(video_dir))
@@ -140,7 +142,8 @@ def convert_dataset(source: str | Path, out: str | Path) -> list[ConversionSumma
                     if not _extract_frame(mp4, frame_id, image_dst):
                         raise RuntimeError(f"Could not extract frame {frame_id} from {mp4}")
                 else:
-                    raise FileNotFoundError(f"No image or video found for {video_dir} frame {frame_id}")
+                    skipped_frames += 1
+                    continue
 
                 rows: list[str] = []
                 for ann in annotations[frame_key]:
@@ -160,6 +163,7 @@ def convert_dataset(source: str | Path, out: str | Path) -> list[ConversionSumma
                 images=image_count,
                 labels=label_count,
                 objects=object_count,
+                skipped_frames=skipped_frames,
             )
         )
 

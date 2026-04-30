@@ -67,7 +67,8 @@ def cmd_prepare_data(args: argparse.Namespace) -> None:
     for summary in summaries:
         print(
             f"{summary.split}: {summary.videos} videos, {summary.images} images, "
-            f"{summary.labels} labels, {summary.objects} objects"
+            f"{summary.labels} labels, {summary.objects} objects, "
+            f"{summary.skipped_frames} skipped missing frames"
         )
     if problems:
         for problem in problems[:25]:
