@@ -48,41 +48,50 @@ dataset/cholecTrack20/
 dataset/annotations/
 ```
 
-For YOLO training, create or export a dataset YAML file with this shape:
+Convert the official CholecTrack20 JSON annotations into YOLO format:
 
-```yaml
-path: dataset/cholecTrack20
-train: images/train
-val: images/val
-test: images/test
-names:
-  0: grasper
-  1: bipolar
-  2: hook
-  3: scissors
-  4: clipper
-  5: irrigator
+```bash
+python -m src.train prepare-data \
+  --source dataset/cholecTrack20 \
+  --out dataset/yolo_cholecTrack20
 ```
+
+This creates `dataset/yolo_cholecTrack20/cholecTrack20.yaml`, YOLO labels, and extracted test frames where needed. The seven classes are `grasper`, `bipolar`, `hook`, `scissors`, `clipper`, `irrigator`, and `specimen-bag`.
 
 Then validate the layout:
 
 ```bash
-python -m src.train validate-data --data dataset/cholecTrack20.yaml
+python -m src.train validate-data --data dataset/yolo_cholecTrack20/cholecTrack20.yaml
 ```
 
 ## Training
 
+Default hyperparameters are defined in `configs/yolov11_cholecTrack20.yaml`:
+
+- `epochs`: 100, tunable up to 300
+- `batch`: 16
+- `imgsz`: 640
+- `lr0`: 0.01
+- `lrf`: 0.01
+- `optimizer`: SGD
+- `weight_decay`: 0.0005
+- `warmup_epochs`: 3
+
 ```bash
-python -m src.train train-detector \
-  --data dataset/cholecTrack20.yaml \
-  --model yolo11n.pt \
-  --epochs 100 \
-  --imgsz 640 \
-  --batch 16 \
-  --device 0
+python -m src.train train-detector --config configs/yolov11_cholecTrack20.yaml
 ```
 
 Weights and logs are written to `results/weights/` and `results/logs/`.
+
+Evaluate detector metrics:
+
+```bash
+python -m src.train evaluate-detector \
+  --weights results/weights/best.pt \
+  --split val
+```
+
+The exported detector metrics are `Precision`, `Recall`, `mAP@0.5`, and `mAP@0.5:0.95` in `results/logs/detection_metrics.csv`.
 
 ## Tracking
 
@@ -91,20 +100,29 @@ Run tracking with the trained detector:
 ```bash
 python -m src.train track \
   --weights results/weights/best.pt \
-  --source dataset/cholecTrack20/videos/val \
+  --source dataset/cholecTrack20/Testing \
   --tracker strongsort \
+  --perspective visibility \
   --device 0
 ```
 
-Benchmark supported tracker modes:
+Benchmark supported tracker modes across all CholecTrack20 tracking perspectives:
 
 ```bash
 python -m src.train benchmark-trackers \
   --weights results/weights/best.pt \
-  --source dataset/cholecTrack20/videos/val \
+  --source dataset/cholecTrack20/Testing \
   --trackers botsort bytetrack ocsort strongsort \
+  --perspectives visibility intracorporeal intraoperative \
   --device 0
 ```
+
+This writes:
+
+- `results/logs/tracking_visibility.csv`
+- `results/logs/tracking_intracorporeal.csv`
+- `results/logs/tracking_intraoperative.csv`
+- `results/logs/tracking_summary.csv`
 
 ## Ablation Study
 

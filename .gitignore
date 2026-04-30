@@ -1,6 +1,7 @@
 # Datasets and large generated artifacts
 dataset/cholecTrack20/*
 dataset/annotations/*
+dataset/yolo_cholecTrack20/*
 !dataset/cholecTrack20/.gitkeep
 !dataset/annotations/.gitkeep
 *.zip

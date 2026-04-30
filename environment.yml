@@ -18,10 +18,12 @@ dependencies:
   - pandas
   - pyyaml
   - tqdm
+  - scipy
   - pip:
       - ultralytics>=8.3
       - boxmot>=13.0
       - lapx
+      - pycocotools
       - tensorboard
       - streamlit
       - motmetrics

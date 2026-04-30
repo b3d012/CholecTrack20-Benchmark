@@ -96,6 +96,12 @@ class DetectorConfig:
     device: str = "0"
     project: str = "results/logs"
     name: str = "yolov11_cholectrack20"
+    lr0: float = 0.01
+    lrf: float = 0.01
+    optimizer: str = "SGD"
+    weight_decay: float = 0.0005
+    warmup_epochs: int = 3
+    weights_dir: str = "results/weights"
 
 
 def load_yolov11(model: str = "yolo11n.pt") -> Any:
@@ -112,7 +118,7 @@ def load_yolov11(model: str = "yolo11n.pt") -> Any:
 
 def train_yolov11(config: DetectorConfig) -> Any:
     model = load_yolov11(config.model)
-    return model.train(
+    result = model.train(
         data=config.data,
         epochs=config.epochs,
         imgsz=config.imgsz,
@@ -120,10 +126,36 @@ def train_yolov11(config: DetectorConfig) -> Any:
         device=config.device,
         project=config.project,
         name=config.name,
+        lr0=config.lr0,
+        lrf=config.lrf,
+        optimizer=config.optimizer,
+        weight_decay=config.weight_decay,
+        warmup_epochs=config.warmup_epochs,
         exist_ok=True,
     )
+    _copy_best_weights(config)
+    return result
 
 
-def validate_yolov11(weights: str | Path, data: str | Path, device: str = "0") -> Any:
+def _copy_best_weights(config: DetectorConfig) -> None:
+    run_dir = Path(config.project) / config.name / "weights"
+    best = run_dir / "best.pt"
+    last = run_dir / "last.pt"
+    target_dir = Path(config.weights_dir)
+    target_dir.mkdir(parents=True, exist_ok=True)
+    import shutil
+
+    if best.exists():
+        shutil.copy2(best, target_dir / "best.pt")
+    if last.exists():
+        shutil.copy2(last, target_dir / "last.pt")
+
+
+def validate_yolov11(
+    weights: str | Path,
+    data: str | Path,
+    device: str = "0",
+    split: str = "val",
+) -> Any:
     model = load_yolov11(str(weights))
-    return model.val(data=str(data), device=device)
+    return model.val(data=str(data), device=device, split=split)
