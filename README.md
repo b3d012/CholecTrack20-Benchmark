@@ -31,13 +31,44 @@ DeepLearningProject/
 
 ## Setup
 
-```bash
-conda env create -f environment.yml
-conda activate deep_learning_project
-python -m src.train check-env
+This workstation stores the project Conda environment and package cache on `D:` to avoid filling the Windows system drive:
+
+```text
+D:\conda_envs\deep_learning_project
+D:\conda_pkgs
+D:\temp\deep_learning_project
 ```
 
-The environment uses PyTorch 2.x because current Ultralytics YOLOv11 packages expect a modern PyTorch stack. If your GPU driver does not support CUDA 12.1, edit `environment.yml` to match your installed CUDA runtime.
+Conda is configured so `conda activate deep_learning_project` resolves to the `D:` environment. The environment also sets `TEMP`, `TMP`, and `ULTRALYTICS_CONFIG_DIR` to `D:\temp\deep_learning_project` when activated.
+
+Recreate the environment from scratch if an old `deep_learning_project` environment already exists:
+
+```powershell
+conda deactivate
+conda env remove -n deep_learning_project -y
+conda env create -f environment.yml
+conda activate deep_learning_project
+where python
+```
+
+Run these smoke checks before training or evaluation:
+
+```powershell
+python -c "import _ctypes, torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())"
+python -m pip check
+python -m src.train check-env
+python -c "from ultralytics import YOLO; YOLO('yolo11n.pt').info()"
+python -c "import cv2, boxmot, lap, pycocotools, motmetrics; print('tracking deps ok')"
+```
+
+The environment pins PyTorch 2.4.1, torchvision 0.19.1, torchaudio 2.4.1, and the PyTorch CUDA 12.1 runtime. `pip-constraints.txt` keeps pip-installed packages from replacing that Conda CUDA stack. Your NVIDIA driver must support CUDA 12.1, but the locally installed CUDA Toolkit does not need to match exactly because PyTorch ships the runtime libraries it uses.
+
+After rebuilding the environment, reclaim package-cache space with:
+
+```powershell
+conda clean --all -y
+python -m pip cache purge
+```
 
 ## Dataset Preparation
 
