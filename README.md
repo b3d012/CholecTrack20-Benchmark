@@ -117,9 +117,7 @@ Weights and logs are written to `results/weights/` and `results/logs/`.
 Evaluate detector metrics:
 
 ```bash
-python -m src.train evaluate-detector \
-  --weights results/weights/best.pt \
-  --split val
+python -m src.train evaluate-detector --weights results/weights/best.pt --split val
 ```
 
 The exported detector metrics are `Precision`, `Recall`, `mAP@0.5`, and `mAP@0.5:0.95` in `results/logs/detection_metrics.csv`.
@@ -129,23 +127,27 @@ The exported detector metrics are `Precision`, `Recall`, `mAP@0.5`, and `mAP@0.5
 Run tracking with the trained detector:
 
 ```bash
-python -m src.train track \
-  --weights results/weights/best.pt \
-  --source dataset/cholecTrack20/Testing \
-  --tracker strongsort \
-  --perspective visibility \
-  --device 0
+python -m src.train track --weights results/weights/best.pt --source dataset/cholecTrack20/Testing --tracker strongsort --perspective visibility --device 0
 ```
 
-Benchmark supported tracker modes across all CholecTrack20 tracking perspectives:
+By default this writes tracking text outputs without rendering annotated videos, which keeps memory use lower on long surgical videos. Add `--save-video` when running a short single-video track if you also need rendered video output.
+
+For a quick pipeline smoke test, run the sampled benchmark preset:
 
 ```bash
-python -m src.train benchmark-trackers \
-  --weights results/weights/best.pt \
-  --source dataset/cholecTrack20/Testing \
-  --trackers botsort bytetrack ocsort strongsort \
-  --perspectives visibility intracorporeal intraoperative \
-  --device 0
+python -m src.train benchmark-trackers --weights results/weights/best.pt --source dataset/cholecTrack20/Testing --preset smoke --device 0
+```
+
+The smoke preset runs `VID01` at `--vid-stride 25` with `botsort` and `bytetrack` on the `visibility` perspective. Use explicit controls for custom fast checks:
+
+```bash
+python -m src.train benchmark-trackers --weights results/weights/best.pt --source dataset/cholecTrack20/Testing --videos VID01 VID06 --trackers botsort --perspectives visibility --vid-stride 25 --jobs 2 --device 0
+```
+
+Benchmark all supported tracker modes across all CholecTrack20 tracking perspectives for final results:
+
+```bash
+python -m src.train benchmark-trackers --weights results/weights/best.pt --source dataset/cholecTrack20/Testing --trackers botsort bytetrack ocsort strongsort  --perspectives visibility intracorporeal intraoperative --device 0
 ```
 
 This writes:
@@ -158,9 +160,7 @@ This writes:
 ## Ablation Study
 
 ```bash
-python -m src.train ablate \
-  --data dataset/cholecTrack20.yaml \
-  --device 0
+python -m src.train ablate --data dataset/yolo_cholecTrack20/cholecTrack20.yaml --device 0
 ```
 
 The ablation scaffold records runs for:

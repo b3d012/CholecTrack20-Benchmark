@@ -133,22 +133,43 @@ def train_yolov11(config: DetectorConfig) -> Any:
         warmup_epochs=config.warmup_epochs,
         exist_ok=True,
     )
-    _copy_best_weights(config)
+    _copy_best_weights(config, result, model)
     return result
 
 
-def _copy_best_weights(config: DetectorConfig) -> None:
-    run_dir = Path(config.project) / config.name / "weights"
-    best = run_dir / "best.pt"
-    last = run_dir / "last.pt"
+def _copy_best_weights(config: DetectorConfig, result: Any | None = None, model: Any | None = None) -> None:
+    run_dirs: list[Path] = []
+    for source in (result, getattr(model, "trainer", None)):
+        save_dir = getattr(source, "save_dir", None)
+        if save_dir:
+            run_dirs.append(Path(save_dir) / "weights")
+
+    run_dirs.extend(
+        [
+            Path(config.project) / config.name / "weights",
+            Path("runs/detect") / config.project / config.name / "weights",
+        ]
+    )
+
     target_dir = Path(config.weights_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
     import shutil
 
-    if best.exists():
-        shutil.copy2(best, target_dir / "best.pt")
-    if last.exists():
-        shutil.copy2(last, target_dir / "last.pt")
+    copied = False
+    for run_dir in dict.fromkeys(run_dirs):
+        best = run_dir / "best.pt"
+        last = run_dir / "last.pt"
+        if best.exists():
+            shutil.copy2(best, target_dir / "best.pt")
+            copied = True
+        if last.exists():
+            shutil.copy2(last, target_dir / "last.pt")
+            copied = True
+        if copied:
+            return
+
+    searched = ", ".join(str(run_dir) for run_dir in run_dirs)
+    raise FileNotFoundError(f"Could not find trained weights. Searched: {searched}")
 
 
 def validate_yolov11(

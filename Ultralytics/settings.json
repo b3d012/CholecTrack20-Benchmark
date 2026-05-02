@@ -1,0 +1,21 @@
+{
+  "settings_version": "0.0.6",
+  "datasets_dir": "D:\\DeepLearningProject\\datasets",
+  "weights_dir": "weights",
+  "runs_dir": "runs",
+  "uuid": "4fa0fa28e87010836842cc634826c321c69cf3438a410bd66c0a90e61f06a227",
+  "sync": true,
+  "api_key": "",
+  "openai_api_key": "",
+  "clearml": true,
+  "comet": true,
+  "dvc": true,
+  "hub": true,
+  "mlflow": true,
+  "neptune": true,
+  "raytune": true,
+  "tensorboard": false,
+  "wandb": false,
+  "vscode_msg": true,
+  "openvino_msg": true
+}

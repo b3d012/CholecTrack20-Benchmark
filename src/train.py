@@ -16,6 +16,14 @@ from .strongsort_tracker import TrackingConfig, benchmark_trackers, run_tracker
 from .utils import append_csv_row, check_environment, load_yaml, save_json, validate_yolo_dataset
 from .yolov11_model import DetectorConfig, train_yolov11, validate_yolov11
 
+SMOKE_BENCHMARK = {
+    "videos": ["VID01"],
+    "perspectives": ["visibility"],
+    "trackers": ["botsort", "bytetrack"],
+    "vid_stride": 25,
+    "jobs": 2,
+}
+
 
 def cmd_check_env(_: argparse.Namespace) -> None:
     info = check_environment()
@@ -104,11 +112,30 @@ def cmd_track(args: argparse.Namespace) -> None:
             conf=args.conf,
             iou=args.iou,
             name=f"tracking_{args.tracker}",
+            save=args.save,
+            vid_stride=args.vid_stride,
         )
     )
 
 
 def cmd_benchmark_trackers(args: argparse.Namespace) -> None:
+    if args.preset == "smoke":
+        if not args.videos:
+            args.videos = SMOKE_BENCHMARK["videos"]
+        if not args.perspectives:
+            args.perspectives = SMOKE_BENCHMARK["perspectives"]
+        if not args.trackers:
+            args.trackers = SMOKE_BENCHMARK["trackers"]
+        if args.vid_stride is None:
+            args.vid_stride = SMOKE_BENCHMARK["vid_stride"]
+        if args.jobs is None:
+            args.jobs = SMOKE_BENCHMARK["jobs"]
+
+    args.perspectives = args.perspectives or ["visibility", "intracorporeal", "intraoperative"]
+    args.trackers = args.trackers or ["botsort", "bytetrack", "ocsort", "strongsort"]
+    args.vid_stride = args.vid_stride or 1
+    args.jobs = args.jobs or 1
+
     invalid = [perspective for perspective in args.perspectives if perspective not in PERSPECTIVE_FIELDS]
     if invalid:
         raise SystemExit(f"Unsupported perspective(s): {', '.join(invalid)}")
@@ -119,7 +146,16 @@ def cmd_benchmark_trackers(args: argparse.Namespace) -> None:
         args.perspectives,
         split_name=args.gt_split,
     )
-    rows = benchmark_trackers(args.weights, args.source, args.trackers, args.perspectives, args.device)
+    rows = benchmark_trackers(
+        args.weights,
+        args.source,
+        args.trackers,
+        args.perspectives,
+        args.device,
+        videos=args.videos,
+        vid_stride=args.vid_stride,
+        jobs=args.jobs,
+    )
     write_tracking_metrics("results/logs/tracking_summary.csv", rows)
     for perspective in args.perspectives:
         perspective_rows = [row for row in rows if row["perspective"] == perspective]
@@ -218,6 +254,8 @@ def build_parser() -> argparse.ArgumentParser:
     track.add_argument("--device", default="0")
     track.add_argument("--conf", type=float, default=0.25)
     track.add_argument("--iou", type=float, default=0.7)
+    track.add_argument("--vid-stride", type=int, default=1)
+    track.add_argument("--save-video", dest="save", action="store_true")
     track.set_defaults(func=cmd_track)
 
     benchmark = subparsers.add_parser("benchmark-trackers")
@@ -225,13 +263,16 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--source", default="dataset/cholecTrack20/Testing")
     benchmark.add_argument("--gt-source", default="dataset/cholecTrack20")
     benchmark.add_argument("--gt-split", default="Testing")
-    benchmark.add_argument("--trackers", nargs="+", default=["botsort", "bytetrack", "ocsort", "strongsort"])
+    benchmark.add_argument("--preset", choices=["smoke"])
+    benchmark.add_argument("--videos", nargs="+")
+    benchmark.add_argument("--trackers", nargs="+")
     benchmark.add_argument(
         "--perspectives",
         nargs="+",
-        default=["visibility", "intracorporeal", "intraoperative"],
         choices=["visibility", "intracorporeal", "intraoperative"],
     )
+    benchmark.add_argument("--vid-stride", type=int)
+    benchmark.add_argument("--jobs", type=int)
     benchmark.add_argument("--device", default="0")
     benchmark.set_defaults(func=cmd_benchmark_trackers)
 
