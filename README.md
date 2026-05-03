@@ -108,19 +108,30 @@ Default hyperparameters are defined in `configs/yolov11_cholecTrack20.yaml`:
 - `weight_decay`: 0.0005
 - `warmup_epochs`: 3
 
-```bash
-python -m src.train train-detector --config configs/yolov11_cholecTrack20.yaml
+Use presets to keep iteration fast and final runs accurate:
+
+```powershell
+# Quick: pipeline sanity check
+python -m src.train train-detector --config configs/yolov11_cholecTrack20.yaml --preset quick --device 0
+python -m src.train evaluate-detector --weights results/weights/best.pt --split val --half
+python -m src.train benchmark-trackers --weights results/weights/best.pt --source dataset/cholecTrack20/Testing --preset smoke --device 0
+
+# Tune: compare YOLO hyperparameters
+python -m src.train train-detector --config configs/yolov11_cholecTrack20.yaml --preset tune --epochs 100 --device 0
+python -m src.train evaluate-detector --weights results/weights/best.pt --split val --half
+
+# Overnight sweep: run several YOLO hyperparameter candidates sequentially
+python -m src.train sweep-detector --config configs/yolov11_cholecTrack20.yaml --preset tune --epochs 50 --device 0 --half
+
+# Final: reportable detector and tracker results
+python -m src.train train-detector --config configs/yolov11_cholecTrack20.yaml --preset final --epochs 300 --device 0
+python -m src.train evaluate-detector --weights results/weights/best.pt --split val
+python -m src.train benchmark-trackers --weights results/weights/best.pt --source dataset/cholecTrack20/Testing --trackers botsort bytetrack ocsort strongsort --perspectives visibility intracorporeal intraoperative --device 0
 ```
 
 Weights and logs are written to `results/weights/` and `results/logs/`.
-
-Evaluate detector metrics:
-
-```bash
-python -m src.train evaluate-detector --weights results/weights/best.pt --split val
-```
-
 The exported detector metrics are `Precision`, `Recall`, `mAP@0.5`, and `mAP@0.5:0.95` in `results/logs/detection_metrics.csv`.
+The detector sweep command adds a timestamp tag automatically, writes a summary like `results/logs/detector_sweep_YYYYMMDD_HHMMSS.csv`, and keeps each run in its own folder under `results/logs/<tag>_<sweep_name>/`.
 
 ## Tracking
 

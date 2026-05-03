@@ -4,7 +4,7 @@ project: results/logs
 name: yolov11_cholectrack20
 weights_dir: results/weights
 
-epochs: 3
+epochs: 100
 batch: 16
 imgsz: 640
 lr0: 0.01

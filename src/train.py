@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import csv
+from datetime import datetime
 from pathlib import Path
 
 from .cholectrack20 import (
@@ -24,6 +26,75 @@ SMOKE_BENCHMARK = {
     "jobs": 2,
 }
 
+TRAIN_PRESETS = {
+    "quick": {
+        "epochs": 3,
+        "imgsz": 384,
+        "cache": "disk",
+        "workers": 8,
+        "patience": 10,
+        "fraction": 0.25,
+        "plots": False,
+    },
+    "tune": {
+        "cache": "disk",
+        "workers": 8,
+        "patience": 30,
+        "fraction": 1.0,
+        "plots": False,
+    },
+    "final": {
+        "cache": "disk",
+        "workers": 8,
+        "patience": 50,
+        "fraction": 1.0,
+        "plots": True,
+    },
+}
+
+DETECTOR_SWEEP = [
+    {
+        "name": "sweep_sgd_lr001_img640",
+        "optimizer": "SGD",
+        "lr0": 0.01,
+        "lrf": 0.01,
+        "imgsz": 640,
+        "batch": 16,
+    },
+    {
+        "name": "sweep_sgd_lr005_img640",
+        "optimizer": "SGD",
+        "lr0": 0.005,
+        "lrf": 0.01,
+        "imgsz": 640,
+        "batch": 16,
+    },
+    {
+        "name": "sweep_adamw_lr001_img640",
+        "optimizer": "AdamW",
+        "lr0": 0.001,
+        "lrf": 0.01,
+        "imgsz": 640,
+        "batch": 16,
+    },
+    {
+        "name": "sweep_adamw_lr0005_img640",
+        "optimizer": "AdamW",
+        "lr0": 0.0005,
+        "lrf": 0.01,
+        "imgsz": 640,
+        "batch": 16,
+    },
+    {
+        "name": "sweep_sgd_lr001_img768",
+        "optimizer": "SGD",
+        "lr0": 0.01,
+        "lrf": 0.01,
+        "imgsz": 768,
+        "batch": 8,
+    },
+]
+
 
 def cmd_check_env(_: argparse.Namespace) -> None:
     info = check_environment()
@@ -43,15 +114,20 @@ def cmd_validate_data(args: argparse.Namespace) -> None:
 
 def _detector_config_from_args(args: argparse.Namespace) -> DetectorConfig:
     data = load_yaml(args.config) if args.config else {}
+    preset = TRAIN_PRESETS.get(args.preset or "", {})
+    plots = args.plots if args.plots is not None else preset.get("plots", True)
+    cache = args.cache if args.cache != "none" else False
+    if args.cache is None:
+        cache = preset.get("cache", data.get("cache", False))
     return DetectorConfig(
         model=args.model or data.get("model", "yolo11n.pt"),
         data=args.data or data.get("data", "dataset/yolo_cholecTrack20/cholecTrack20.yaml"),
-        epochs=args.epochs if args.epochs is not None else int(data.get("epochs", 100)),
-        imgsz=args.imgsz if args.imgsz is not None else int(data.get("imgsz", 640)),
+        epochs=args.epochs if args.epochs is not None else int(preset.get("epochs", data.get("epochs", 100))),
+        imgsz=args.imgsz if args.imgsz is not None else int(preset.get("imgsz", data.get("imgsz", 640))),
         batch=args.batch if args.batch is not None else int(data.get("batch", 16)),
         device=args.device or str(data.get("device", "0")),
         project=args.project or data.get("project", "results/logs"),
-        name=args.name or data.get("name", "yolov11_cholectrack20"),
+        name=args.name or preset.get("name", data.get("name", "yolov11_cholectrack20")),
         lr0=args.lr0 if args.lr0 is not None else float(data.get("lr0", 0.01)),
         lrf=args.lrf if args.lrf is not None else float(data.get("lrf", 0.01)),
         optimizer=args.optimizer or data.get("optimizer", "SGD"),
@@ -62,6 +138,13 @@ def _detector_config_from_args(args: argparse.Namespace) -> DetectorConfig:
         if args.warmup_epochs is not None
         else int(data.get("warmup_epochs", 3)),
         weights_dir=data.get("weights_dir", "results/weights"),
+        cache=cache,
+        workers=args.workers if args.workers is not None else int(preset.get("workers", data.get("workers", 8))),
+        patience=args.patience if args.patience is not None else int(preset.get("patience", data.get("patience", 100))),
+        fraction=args.fraction if args.fraction is not None else float(preset.get("fraction", data.get("fraction", 1.0))),
+        plots=bool(plots),
+        resume=args.resume,
+        amp=not args.no_amp,
     )
 
 
@@ -89,8 +172,113 @@ def cmd_train_detector(args: argparse.Namespace) -> None:
     train_yolov11(_detector_config_from_args(args))
 
 
+def _best_weight_path(config: DetectorConfig) -> Path:
+    candidates = [
+        Path(config.project) / config.name / "weights" / "best.pt",
+        Path("runs/detect") / config.project / config.name / "weights" / "best.pt",
+        Path(config.weights_dir) / "best.pt",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[-1]
+
+
+def _write_sweep_rows(path: str | Path, rows: list[dict[str, object]]) -> None:
+    if not rows:
+        return
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    columns = list(rows[0].keys())
+    with output.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=columns)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def cmd_sweep_detector(args: argparse.Namespace) -> None:
+    rows: list[dict[str, object]] = []
+    tag = args.tag or datetime.now().strftime("sweep_%Y%m%d_%H%M%S")
+    out_path = args.out or f"results/logs/detector_{tag}.csv"
+    for experiment in DETECTOR_SWEEP:
+        run_args = argparse.Namespace(**vars(args))
+        run_args.name = f"{tag}_{experiment['name']}"
+        run_args.optimizer = experiment["optimizer"]
+        run_args.lr0 = experiment["lr0"]
+        run_args.lrf = experiment["lrf"]
+        run_args.imgsz = experiment["imgsz"]
+        run_args.batch = experiment["batch"]
+        run_args.epochs = args.epochs
+        run_args.plots = args.plots
+        run_args.resume = False
+        run_args.no_amp = args.no_amp
+        config = _detector_config_from_args(run_args)
+
+        print(f"Starting sweep run: {config.name}")
+        try:
+            train_yolov11(config)
+            weights = _best_weight_path(config)
+            result = validate_yolov11(
+                weights,
+                config.data,
+                config.device,
+                args.split,
+                imgsz=args.eval_imgsz,
+                batch=args.eval_batch,
+                half=args.half,
+                plots=False,
+            )
+            metrics = detector_metrics_row(result, args.split)
+            row = {
+                "name": config.name,
+                "status": "ok",
+                "weights": str(weights),
+                "optimizer": config.optimizer,
+                "lr0": config.lr0,
+                "lrf": config.lrf,
+                "imgsz": config.imgsz,
+                "batch": config.batch,
+                "epochs": config.epochs,
+                "precision": metrics.get("precision"),
+                "recall": metrics.get("recall"),
+                "mAP@0.5": metrics.get("mAP@0.5"),
+                "mAP@0.5:0.95": metrics.get("mAP@0.5:0.95"),
+                "error": "",
+            }
+        except Exception as exc:
+            row = {
+                "name": config.name,
+                "status": "failed",
+                "weights": "",
+                "optimizer": config.optimizer,
+                "lr0": config.lr0,
+                "lrf": config.lrf,
+                "imgsz": config.imgsz,
+                "batch": config.batch,
+                "epochs": config.epochs,
+                "precision": "",
+                "recall": "",
+                "mAP@0.5": "",
+                "mAP@0.5:0.95": "",
+                "error": str(exc),
+            }
+        rows.append(row)
+        _write_sweep_rows(out_path, rows)
+        print(f"{row['name']}: {row['status']} mAP@0.5:0.95={row['mAP@0.5:0.95']}")
+    print(f"Sweep summary written to {out_path}")
+
+
 def cmd_validate_detector(args: argparse.Namespace) -> None:
-    result = validate_yolov11(args.weights, args.data, args.device, args.split)
+    result = validate_yolov11(
+        args.weights,
+        args.data,
+        args.device,
+        args.split,
+        imgsz=args.imgsz,
+        batch=args.batch,
+        half=args.half,
+        plots=args.plots,
+    )
     row = detector_metrics_row(result, args.split)
     write_detection_metrics("results/logs/detection_metrics.csv", row)
     for key, value in row.items():
@@ -213,6 +401,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     train = subparsers.add_parser("train-detector")
     train.add_argument("--config", default="configs/yolov11_cholecTrack20.yaml")
+    train.add_argument("--preset", choices=["quick", "tune", "final"])
     train.add_argument("--data")
     train.add_argument("--model")
     train.add_argument("--epochs", type=int)
@@ -226,13 +415,51 @@ def build_parser() -> argparse.ArgumentParser:
     train.add_argument("--optimizer")
     train.add_argument("--weight-decay", type=float)
     train.add_argument("--warmup-epochs", type=int)
+    train.add_argument("--cache", choices=["none", "ram", "disk"])
+    train.add_argument("--workers", type=int)
+    train.add_argument("--patience", type=int)
+    train.add_argument("--fraction", type=float)
+    train.add_argument("--plots", dest="plots", action="store_true")
+    train.add_argument("--no-plots", dest="plots", action="store_false")
+    train.add_argument("--resume", action="store_true")
+    train.add_argument("--no-amp", action="store_true")
+    train.set_defaults(plots=None)
     train.set_defaults(func=cmd_train_detector)
+
+    sweep = subparsers.add_parser("sweep-detector")
+    sweep.add_argument("--config", default="configs/yolov11_cholecTrack20.yaml")
+    sweep.add_argument("--preset", choices=["quick", "tune", "final"], default="tune")
+    sweep.add_argument("--data")
+    sweep.add_argument("--model")
+    sweep.add_argument("--epochs", type=int, default=50)
+    sweep.add_argument("--device")
+    sweep.add_argument("--project")
+    sweep.add_argument("--weight-decay", type=float)
+    sweep.add_argument("--warmup-epochs", type=int)
+    sweep.add_argument("--cache", choices=["none", "ram", "disk"])
+    sweep.add_argument("--workers", type=int)
+    sweep.add_argument("--patience", type=int)
+    sweep.add_argument("--fraction", type=float)
+    sweep.add_argument("--plots", dest="plots", action="store_true")
+    sweep.add_argument("--no-plots", dest="plots", action="store_false")
+    sweep.add_argument("--no-amp", action="store_true")
+    sweep.add_argument("--split", default="val", choices=["train", "val", "test"])
+    sweep.add_argument("--eval-imgsz", type=int, default=640)
+    sweep.add_argument("--eval-batch", type=int, default=16)
+    sweep.add_argument("--half", action="store_true")
+    sweep.add_argument("--tag")
+    sweep.add_argument("--out")
+    sweep.set_defaults(plots=None, resume=False, func=cmd_sweep_detector)
 
     val = subparsers.add_parser("validate-detector")
     val.add_argument("--weights", required=True)
     val.add_argument("--data", default="dataset/yolo_cholecTrack20/cholecTrack20.yaml")
     val.add_argument("--device", default="0")
     val.add_argument("--split", default="val", choices=["train", "val", "test"])
+    val.add_argument("--imgsz", type=int, default=640)
+    val.add_argument("--batch", type=int, default=16)
+    val.add_argument("--half", action="store_true")
+    val.add_argument("--plots", action="store_true")
     val.set_defaults(func=cmd_validate_detector)
 
     eval_detector = subparsers.add_parser("evaluate-detector")
@@ -240,6 +467,10 @@ def build_parser() -> argparse.ArgumentParser:
     eval_detector.add_argument("--data", default="dataset/yolo_cholecTrack20/cholecTrack20.yaml")
     eval_detector.add_argument("--device", default="0")
     eval_detector.add_argument("--split", default="val", choices=["train", "val", "test"])
+    eval_detector.add_argument("--imgsz", type=int, default=640)
+    eval_detector.add_argument("--batch", type=int, default=16)
+    eval_detector.add_argument("--half", action="store_true")
+    eval_detector.add_argument("--plots", action="store_true")
     eval_detector.set_defaults(func=cmd_evaluate_detector)
 
     track = subparsers.add_parser("track")

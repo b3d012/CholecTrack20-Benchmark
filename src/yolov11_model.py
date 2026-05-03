@@ -102,6 +102,13 @@ class DetectorConfig:
     weight_decay: float = 0.0005
     warmup_epochs: int = 3
     weights_dir: str = "results/weights"
+    cache: str | bool = False
+    workers: int = 8
+    patience: int = 100
+    fraction: float = 1.0
+    plots: bool = True
+    resume: bool = False
+    amp: bool = True
 
 
 def load_yolov11(model: str = "yolo11n.pt") -> Any:
@@ -131,6 +138,13 @@ def train_yolov11(config: DetectorConfig) -> Any:
         optimizer=config.optimizer,
         weight_decay=config.weight_decay,
         warmup_epochs=config.warmup_epochs,
+        cache=config.cache,
+        workers=config.workers,
+        patience=config.patience,
+        fraction=config.fraction,
+        plots=config.plots,
+        resume=config.resume,
+        amp=config.amp,
         exist_ok=True,
     )
     _copy_best_weights(config, result, model)
@@ -177,6 +191,10 @@ def validate_yolov11(
     data: str | Path,
     device: str = "0",
     split: str = "val",
+    imgsz: int = 640,
+    batch: int = 16,
+    half: bool = False,
+    plots: bool = False,
 ) -> Any:
     model = load_yolov11(str(weights))
-    return model.val(data=str(data), device=device, split=split)
+    return model.val(data=str(data), device=device, split=split, imgsz=imgsz, batch=batch, half=half, plots=plots)
