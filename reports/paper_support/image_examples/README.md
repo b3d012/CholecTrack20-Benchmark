@@ -1,0 +1,22 @@
+# Paper Image Examples
+
+- Example 01: `example_01_vid25_frame_54451.png` - Clear standard tracking case (VID25 frame 54451, avg confidence 0.991).
+- Example 02: `example_02_vid25_frame_36701.png` - Clear multi-tool case with specimen bag (VID25 frame 36701, avg confidence 0.932).
+- Example 03: `example_03_vid06_frame_58101.png` - Crowded multi-instrument case (VID06 frame 58101, avg confidence 0.998).
+- Example 04: `example_04_vid25_frame_44626.png` - Occlusion case (VID25 frame 44626, avg confidence 0.998).
+- Example 05: `example_05_vid92_frame_37726.png` - Smoke case (VID92 frame 37726, avg confidence 0.947).
+- Example 06: `example_06_vid92_frame_38301.png` - Bleeding case (VID92 frame 38301, avg confidence 0.999).
+- Example 07: `example_07_vid92_frame_33626.png` - Bleeding and smoke combined case (VID92 frame 33626, avg confidence 0.947).
+- Example 08: `example_08_vid92_frame_48151.png` - Reflection case (VID92 frame 48151, avg confidence 0.996).
+- Example 09: `example_09_vid07_frame_103001.png` - Trocar or undercoverage case (VID07 frame 103001, avg confidence 0.991).
+- Example 10: `example_10_vid92_frame_8276.png` - Blur case (VID92 frame 8276, avg confidence 1.000).
+- Example 11: `example_11_vid111_frame_42276.png` - Foul lens case (VID111 frame 42276, avg confidence 0.999).
+- Example 12: `example_12_vid111_frame_44151.png` - Bipolar detection example (VID111 frame 44151, avg confidence 0.980).
+- Example 13: `example_13_vid111_frame_30901.png` - Hook detection example (VID111 frame 30901, avg confidence 1.000).
+- Example 14: `example_14_vid111_frame_46851.png` - Scissors detection example (VID111 frame 46851, avg confidence 0.983).
+- Example 15: `example_15_vid06_frame_43751.png` - Clipper detection example (VID06 frame 43751, avg confidence 1.000).
+- Example 16: `example_16_vid06_frame_62376.png` - Irrigator detection example (VID06 frame 62376, avg confidence 0.996).
+- Example 17: `example_17_vid06_frame_57951.png` - Specimen bag detection example (VID06 frame 57951, avg confidence 0.996).
+- Example 18: `example_18_vid25_frame_44326.png` - High-confidence multi-tool tracking output (VID25 frame 44326, avg confidence 0.999).
+- Example 19: `example_19_vid07_frame_102926.png` - Mixed difficult-condition tracking output (VID07 frame 102926, avg confidence 0.998).
+- Example 20: `example_20_vid07_frame_21551.png` - Clean high-confidence tracking output (VID07 frame 21551, avg confidence 1.000).

@@ -1,0 +1,17 @@
+Example 05: Smoke case
+
+Image file: example_05_vid92_frame_37726.png
+Video/frame: VID92 frame 37726
+Predicted detections shown: 4
+Predicted tool classes: Grasper, Bipolar
+Average shown confidence: 0.947
+Ground-truth challenge tags: Crowded instruments, Occlusion, Bleeding, Smoke
+
+How to use this in the paper:
+Use this image as a qualitative example for the scenario "Smoke case". It is useful for the Results and Discussion section because it shows what the EfficientDet-D0 -> StrongSORT/EA-StrongSORT-oriented pipeline produces on an actual CholecTrack20 test frame.
+
+Interpretation:
+The example is relatively clear because the detections have high confidence and visible bounding boxes. It can be used to show that the pipeline works end-to-end and produces readable tool identity outputs. If boxes overlap or labels are crowded, that should be discussed as a realistic surgical-video limitation rather than hidden.
+
+Suggested caption:
+Qualitative tracking output on VID92 frame 37726. The overlay shows predicted surgical tool class, track ID, and confidence from the EfficientDet-D0 to StrongSORT tracking pipeline under the following condition(s): Crowded instruments, Occlusion, Bleeding, Smoke.

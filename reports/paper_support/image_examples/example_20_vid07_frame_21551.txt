@@ -1,0 +1,17 @@
+Example 20: Clean high-confidence tracking output
+
+Image file: example_20_vid07_frame_21551.png
+Video/frame: VID07 frame 21551
+Predicted detections shown: 1
+Predicted tool classes: Grasper
+Average shown confidence: 1.000
+Ground-truth challenge tags: Clear / standard view
+
+How to use this in the paper:
+Use this image as a qualitative example for the scenario "Clean high-confidence tracking output". It is useful for the Results and Discussion section because it shows what the EfficientDet-D0 -> StrongSORT/EA-StrongSORT-oriented pipeline produces on an actual CholecTrack20 test frame.
+
+Interpretation:
+The example is relatively clear because the detections have high confidence and visible bounding boxes. It can be used to show that the pipeline works end-to-end and produces readable tool identity outputs. If boxes overlap or labels are crowded, that should be discussed as a realistic surgical-video limitation rather than hidden.
+
+Suggested caption:
+Qualitative tracking output on VID07 frame 21551. The overlay shows predicted surgical tool class, track ID, and confidence from the EfficientDet-D0 to StrongSORT tracking pipeline under the following condition(s): Clear / standard view.

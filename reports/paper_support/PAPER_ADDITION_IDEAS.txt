@@ -1,0 +1,84 @@
+Paper Additions And Improvement Ideas
+====================================
+
+This file lists sections and paragraphs that can be added to the term paper if more depth is needed. The current paper already contains the required structure, but these ideas can make it stronger, especially for a final submission or presentation defense.
+
+1. Expanded Future Work
+-----------------------
+
+Add a separate Future Work subsection after the Conclusion or as the final paragraph of the Conclusion.
+
+Suggested content:
+
+Future work should follow a staged plan. First, detector quality should be improved before additional tracker tuning, because tracking-by-detection systems depend heavily on the quality and continuity of frame-level detections. The rare classes, especially irrigator and scissors, need class-aware training strategies such as oversampling, focal loss tuning, copy-paste augmentation, or targeted collection of more examples. Second, the exact EA-StrongSORT ReID branch should be implemented by replacing the OSNet ReID model with an EfficientNetV2 feature extractor using Efficient Channel Attention in deeper layers. Third, GIoU-based association should be compared against the current IoU-based matching strategy. Fourth, tracking should be evaluated per class and per visual challenge so improvements can be linked to specific surgical conditions rather than only global MOTA and IDF1 values.
+
+2. What Could Have Been Done Differently
+----------------------------------------
+
+Useful honest discussion:
+
+The project spent significant effort switching detector families after YOLO11 underperformed. A more systematic approach would have been to first reproduce one official CholecTrack20 detector baseline exactly, then introduce EfficientDet-D0 as a controlled comparison. This would make it easier to separate implementation issues from model-family limitations. Another improvement would be to run short 20-30 epoch screening experiments before any 100-150 epoch training run, because the long EfficientDet run took many hours. Finally, more effort could have been spent on data imbalance before tracker benchmarking, since rare-class detection errors directly reduce tracking performance.
+
+3. Stronger Literature Review Angles
+------------------------------------
+
+Possible extra paragraphs:
+
+- Explain the difference between detection, segmentation, and tracking in medical video.
+- Compare surgical tool tracking with tumor tracking from the EA-StrongSORT paper.
+- Discuss why tracking-by-detection is attractive: modular, interpretable, easier to debug, and compatible with standard MOT metrics.
+- Discuss why it can fail: detector misses, false positives, box jitter, and identity fragmentation.
+- Explain why ReID embeddings are hard in surgery: tools from the same class look similar, metallic reflections change appearance, and only partial tool regions may be visible.
+
+4. Additional Limitations
+-------------------------
+
+Potential limitations to add:
+
+- The exact EfficientNetV2/ECA ReID module from EA-StrongSORT was not fully implemented yet.
+- The model was trained on limited hardware, which constrained batch size, image size, model scale, and number of experiments.
+- The final detector still performs poorly on rare classes, especially irrigator.
+- The full benchmark took around 12 hours, limiting the number of tracker configurations that could be tested.
+- Qualitative examples show readable tracking outputs, but they also reveal crowded labels and imperfect boxes under surgical visual challenges.
+
+5. Suggested Ablation Study Section
+-----------------------------------
+
+If there is time later, add an ablation table like:
+
+Model / Pipeline | Detector AP0.5:0.95 | Visibility MOTA | Visibility IDF1 | Notes
+YOLO11 -> StrongSORT | 26.6 | not final / optional | optional | Fast but lower AP
+EfficientDet-D0 -> StrongSORT | 27.9 | 20.974 | 24.172 | Current final pipeline
+EfficientDet-D0 -> EA-StrongSORT ReID | future | future | future | Planned exact EA extension
+EfficientDet-D0 -> EA-StrongSORT + GIoU | future | future | future | Planned association extension
+
+6. Error Analysis Ideas
+-----------------------
+
+Add an Error Analysis subsection to Results and Discussion:
+
+- False negatives: missed tools break tracks and reduce recall.
+- False positives: incorrect detections create extra tracks and reduce MOTA.
+- Box jitter: changing box location from shaft to tip can confuse association.
+- Class confusion: similar metallic tools may be assigned wrong labels.
+- Rare classes: scarce examples lead to weak AP and unstable tracking.
+- Perspective difficulty: visibility is easiest; intraoperative is hardest because identity must persist across longer disappearances.
+
+7. Ethical And Practical Considerations
+---------------------------------------
+
+Possible paragraph:
+
+Although the system is intended for research and decision support, it should not be interpreted as a clinical safety device. Surgical AI systems must be validated across institutions, surgeons, camera systems, and patient populations before clinical use. Dataset privacy, licensing, and careful reporting are important because surgical videos are sensitive medical data. In this project, the dataset itself is excluded from GitHub and only summary results, code, and report materials are shared.
+
+8. Better Results Presentation
+------------------------------
+
+Add qualitative figures in groups:
+
+- Clear standard cases where tracking works well.
+- Crowded/occluded cases where labels are still readable.
+- Smoke/reflection/undercoverage cases showing realistic difficulty.
+- Failure-prone cases where boxes are large or overlapping.
+
+The generated image bank in reports/paper_support/image_examples contains candidate figures and sidecar notes.
