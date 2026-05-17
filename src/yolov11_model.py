@@ -96,6 +96,19 @@ class DetectorConfig:
     device: str = "0"
     project: str = "results/logs"
     name: str = "yolov11_cholectrack20"
+    lr0: float = 0.01
+    lrf: float = 0.01
+    optimizer: str = "SGD"
+    weight_decay: float = 0.0005
+    warmup_epochs: int = 3
+    weights_dir: str = "results/weights"
+    cache: str | bool = False
+    workers: int = 8
+    patience: int = 100
+    fraction: float = 1.0
+    plots: bool = True
+    resume: bool = False
+    amp: bool = True
 
 
 def load_yolov11(model: str = "yolo11n.pt") -> Any:
@@ -112,7 +125,7 @@ def load_yolov11(model: str = "yolo11n.pt") -> Any:
 
 def train_yolov11(config: DetectorConfig) -> Any:
     model = load_yolov11(config.model)
-    return model.train(
+    result = model.train(
         data=config.data,
         epochs=config.epochs,
         imgsz=config.imgsz,
@@ -120,10 +133,68 @@ def train_yolov11(config: DetectorConfig) -> Any:
         device=config.device,
         project=config.project,
         name=config.name,
+        lr0=config.lr0,
+        lrf=config.lrf,
+        optimizer=config.optimizer,
+        weight_decay=config.weight_decay,
+        warmup_epochs=config.warmup_epochs,
+        cache=config.cache,
+        workers=config.workers,
+        patience=config.patience,
+        fraction=config.fraction,
+        plots=config.plots,
+        resume=config.resume,
+        amp=config.amp,
         exist_ok=True,
     )
+    _copy_best_weights(config, result, model)
+    return result
 
 
-def validate_yolov11(weights: str | Path, data: str | Path, device: str = "0") -> Any:
+def _copy_best_weights(config: DetectorConfig, result: Any | None = None, model: Any | None = None) -> None:
+    run_dirs: list[Path] = []
+    for source in (result, getattr(model, "trainer", None)):
+        save_dir = getattr(source, "save_dir", None)
+        if save_dir:
+            run_dirs.append(Path(save_dir) / "weights")
+
+    run_dirs.extend(
+        [
+            Path(config.project) / config.name / "weights",
+            Path("runs/detect") / config.project / config.name / "weights",
+        ]
+    )
+
+    target_dir = Path(config.weights_dir)
+    target_dir.mkdir(parents=True, exist_ok=True)
+    import shutil
+
+    copied = False
+    for run_dir in dict.fromkeys(run_dirs):
+        best = run_dir / "best.pt"
+        last = run_dir / "last.pt"
+        if best.exists():
+            shutil.copy2(best, target_dir / "best.pt")
+            copied = True
+        if last.exists():
+            shutil.copy2(last, target_dir / "last.pt")
+            copied = True
+        if copied:
+            return
+
+    searched = ", ".join(str(run_dir) for run_dir in run_dirs)
+    raise FileNotFoundError(f"Could not find trained weights. Searched: {searched}")
+
+
+def validate_yolov11(
+    weights: str | Path,
+    data: str | Path,
+    device: str = "0",
+    split: str = "val",
+    imgsz: int = 640,
+    batch: int = 16,
+    half: bool = False,
+    plots: bool = False,
+) -> Any:
     model = load_yolov11(str(weights))
-    return model.val(data=str(data), device=device)
+    return model.val(data=str(data), device=device, split=split, imgsz=imgsz, batch=batch, half=half, plots=plots)

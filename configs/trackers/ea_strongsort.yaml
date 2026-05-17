@@ -1,0 +1,16 @@
+tracker_type: strongsort
+name: ea_strongsort
+
+# Detector association thresholds
+conf: 0.25
+iou: 0.7
+max_age: 30
+n_init: 3
+max_iou_distance: 0.7
+max_cosine_distance: 0.2
+nn_budget: 100
+
+# EA-StrongSORT phase options. The current pipeline keeps YOLOv11 standard and
+# uses this config to tune tracker/re-identification experiments.
+reid_model: osnet_x0_25_msmt17.pt
+use_eca_reid: false

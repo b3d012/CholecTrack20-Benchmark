@@ -1,0 +1,21 @@
+model: tf_efficientdet_d0
+data: dataset/yolo_cholecTrack20/cholecTrack20.yaml
+source: dataset/cholecTrack20
+project: results/logs
+name: efficientdet_d0_cholectrack20
+weights_dir: results/weights
+num_classes: 7
+
+epochs: 100
+batch: 4
+accumulation: 2
+imgsz: 512
+lr0: 0.0002
+lrf: 0.01
+optimizer: AdamW
+weight_decay: 0.0001
+warmup_epochs: 3
+workers: 4
+patience: 30
+eval_interval: 1
+device: "0"
