@@ -19,7 +19,7 @@ from reportlab.platypus import Image, PageBreak, Paragraph, SimpleDocTemplate, S
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = Path(r"C:\Users\abdul\Downloads\AssignmentAttachment_F106F633.docx")
-OUT = ROOT / "reports" / "aue_template"
+OUT = ROOT / "reports"
 ASSETS = OUT / "assets"
 OUT.mkdir(parents=True, exist_ok=True)
 ASSETS.mkdir(parents=True, exist_ok=True)
@@ -454,8 +454,9 @@ def create_assets() -> tuple[Path, Path, list[Path]]:
 
 
 def build_docx(arch: Path, curve: Path, samples: list[Path]) -> Path:
-    doc = Document(str(TEMPLATE))
-    clear_document(doc)
+    doc = Document(str(TEMPLATE)) if TEMPLATE.exists() else Document()
+    if TEMPLATE.exists():
+        clear_document(doc)
     set_doc_defaults(doc)
     title = doc.add_paragraph()
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER

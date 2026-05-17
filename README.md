@@ -29,6 +29,16 @@ DeepLearningProject/
 └── slides/
 ```
 
+## Paper Continuation Package
+
+The main paper files are stored directly under `reports/`:
+
+- `reports/MAI622_Abdullah_Shamsa_AUE_Template_Report.docx`
+- `reports/MAI622_Abdullah_Shamsa_AUE_Template_Report.pdf`
+- `reports/MAI622_Abdullah_Shamsa_AUE_Template_Report.tex`
+
+Supporting figures are in `reports/assets/`, and short reference notes are in `reports/reference_notes/`. The dataset, trained checkpoints, full run logs, and local model downloads are intentionally ignored by Git because they are large and/or private. Root-level result summary files such as `EFFICIENTDET_HYPERPARAMETER_COMPARISON.csv`, `EA_STRONGSORT_TRACKING_RESULTS.md`, and `PROJECT_EXPERIMENT_SUMMARY_FOR_DRS.md` are kept for paper writing.
+
 ## Setup
 
 This workstation stores the project Conda environment and package cache on `D:` to avoid filling the Windows system drive:

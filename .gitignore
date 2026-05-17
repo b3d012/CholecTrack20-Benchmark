@@ -5,6 +5,7 @@ dataset/yolo_cholecTrack20/*
 !dataset/cholecTrack20/.gitkeep
 !dataset/annotations/.gitkeep
 *.zip
+*.rar
 *.tar
 *.tar.gz
 *.pt
@@ -20,6 +21,7 @@ results/weights/*
 !results/weights/.gitkeep
 *.log
 *.tmp
+~$*.docx
 
 # Python/cache artifacts
 __pycache__/
