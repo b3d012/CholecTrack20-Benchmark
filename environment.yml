@@ -21,6 +21,9 @@ dependencies:
   - pip:
       - --constraint pip-constraints.txt
       - ultralytics==8.4.45
+      - effdet==0.4.1
+      - timm==0.9.16
+      - omegaconf==2.3.0
       - boxmot==18.0.0
       - opencv-python==4.10.0.84
       - lapx==0.9.4

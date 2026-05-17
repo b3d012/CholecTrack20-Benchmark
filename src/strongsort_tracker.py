@@ -13,6 +13,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
+import numpy as np
+
+from .efficientdet_model import EfficientDetPredictor
 from .yolov11_model import load_yolov11
 
 
@@ -76,11 +79,22 @@ class EAStrongSORTTracker:
 
     def _detector(self):
         if self.detector is None:
+            if self._is_efficientdet_weights(Path(self.config.weights)):
+                self.detector = EfficientDetPredictor(
+                    self.config.weights,
+                    device=self.config.device,
+                    half=True,
+                )
+                return self.detector
             self.detector = load_yolov11(self.config.weights)
         return self.detector
 
     def run(self) -> object:
         normalized = TRACKER_ALIASES.get(self.config.tracker.lower(), self.config.tracker.lower())
+        if self._is_efficientdet_weights(Path(self.config.weights)):
+            if normalized != "strongsort":
+                raise ValueError("EfficientDet tracking currently supports strongsort / ea-strongsort only.")
+            return self._run_efficientdet_strongsort_to_project()
         if normalized in {"strongsort", "ocsort"}:
             return self._run_boxmot_or_raise(normalized)
         tracker = self._resolve_tracker(self.config.tracker)
@@ -109,7 +123,12 @@ class EAStrongSORTTracker:
         ids: set[int] = set()
         for source in sources:
             sequence_name = source.stem if source.is_file() else source.name
-            if normalized in {"strongsort", "ocsort"}:
+            if self._is_efficientdet_weights(Path(self.config.weights)):
+                if normalized != "strongsort":
+                    raise ValueError("EfficientDet tracking currently supports strongsort / ea-strongsort only.")
+                rows = self._track_source_efficientdet_strongsort(source)
+                self._write_mot(output_dir / f"{sequence_name}.txt", rows)
+            elif normalized in {"strongsort", "ocsort"}:
                 path = self._run_boxmot_source_to_mot(normalized, source, output_dir / f"{sequence_name}.txt")
                 rows = self._read_mot_summary(path)
             else:
@@ -171,6 +190,97 @@ class EAStrongSORTTracker:
                     ]
                 )
         return rows
+
+    def _run_efficientdet_strongsort_to_project(self) -> dict[str, object]:
+        output_dir = Path(self.config.project) / "track" / self.config.name
+        summary = self.run_to_mot(output_dir)
+        return summary
+
+    def _track_source_efficientdet_strongsort(self, source: Path) -> list[list[float]]:
+        try:
+            import cv2
+            import torch
+            from boxmot.trackers.strongsort.strongsort import StrongSort
+        except ImportError as exc:
+            raise RuntimeError(
+                "EfficientDet + StrongSORT tracking requires OpenCV, PyTorch, and BoxMOT."
+            ) from exc
+
+        device = torch.device("cpu" if self.config.device.lower() == "cpu" else f"cuda:{self.config.device}")
+        reid_weights = self._resolve_reid_weights("osnet_x0_25_msmt17.pt")
+        tracker = StrongSort(
+            reid_weights=reid_weights,
+            device=device,
+            half=device.type == "cuda",
+            min_conf=max(float(self.config.conf), 0.001),
+            max_age=30,
+            min_hits=3,
+            iou_threshold=0.3,
+            max_iou_dist=0.7,
+            max_cos_dist=0.4,
+            n_init=3,
+            nn_budget=100,
+            nr_classes=7,
+        )
+        detector = self._detector()
+        rows: list[list[float]] = []
+
+        for frame_idx, frame in self._iter_frames(source):
+            detections = detector.predict_frame(frame, conf=self.config.conf)
+            tracks = tracker.update(detections, frame)
+            tracks = np.asarray(tracks, dtype=np.float32)
+            if tracks.size == 0:
+                continue
+            if tracks.ndim == 1:
+                tracks = tracks.reshape(1, -1)
+            for track in tracks:
+                if track.shape[0] < 7:
+                    continue
+                x1, y1, x2, y2, track_id, conf, cls_id = [float(value) for value in track[:7]]
+                rows.append(
+                    [
+                        frame_idx,
+                        int(track_id),
+                        x1,
+                        y1,
+                        max(0.0, x2 - x1),
+                        max(0.0, y2 - y1),
+                        float(conf),
+                        int(cls_id),
+                        -1,
+                    ]
+                )
+        return rows
+
+    def _iter_frames(self, source: Path):
+        import cv2
+
+        stride = max(int(self.config.vid_stride), 1)
+        if source.suffix.lower() in {".mp4", ".avi", ".mov", ".mkv"}:
+            cap = cv2.VideoCapture(str(source))
+            if not cap.isOpened():
+                raise FileNotFoundError(f"Could not open video source: {source}")
+            frame_idx = 0
+            try:
+                while True:
+                    ok, frame = cap.read()
+                    if not ok or frame is None:
+                        break
+                    frame_idx += 1
+                    if (frame_idx - 1) % stride != 0:
+                        continue
+                    yield frame_idx, frame
+            finally:
+                cap.release()
+            return
+
+        images = [source] if source.is_file() else self._iter_sources(source)
+        for result_idx, image_path in enumerate(images, start=1):
+            if (result_idx - 1) % stride != 0:
+                continue
+            frame = cv2.imread(str(image_path))
+            if frame is not None:
+                yield result_idx, frame
 
     @staticmethod
     def _write_mot(path: Path, rows: list[list[float]]) -> None:
@@ -345,6 +455,23 @@ class EAStrongSORTTracker:
             except OSError:
                 shutil.copy2(weights, alias)
         return str(alias)
+
+    @staticmethod
+    def _is_efficientdet_weights(weights: Path) -> bool:
+        return weights.suffix.lower() in {".pth", ".ckpt"} or "efficientdet" in weights.name.lower()
+
+    @staticmethod
+    def _resolve_reid_weights(name: str) -> Path:
+        candidates = [
+            Path(sys.executable).parent.parent / "lib" / "site-packages" / "models" / name,
+            Path(sys.executable).parent / "models" / name,
+            Path("results/weights") / name,
+            Path(name),
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        return Path(name)
 
     @staticmethod
     def _boxmot_command() -> list[str]:

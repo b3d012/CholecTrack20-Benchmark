@@ -1,0 +1,535 @@
+
+
+===== PAGE 1 =====
+EA-StrongSORT: An Efficient Attention StrongSORT
+Framework for Detection-Based Tumor Tracking in
+Cine-MRI TrackRAD2025 Dataset
+Noha Ghatwary1,*, Alyaa Amer2,3, Salema Fayed1, Sahar Magdy4, Alla Hussein4, Rania
+Kadry5, and Amina I. Abdelmaksoud1
+1Computer Engineering Department, College of Engineering and Technology, Arab Academy for Science,
+Technology and Maritime Transport, Smart Village Campus, Giza P .O. Box 2033, Egypt
+2Computer Science Department, College of Engineering and Technology, American University in the Emirates,
+Dubai, UAE
+3Computer Science Department, College of Computing and Information Technology, Arab Academy for Science,
+Technology and Maritime Transport, Smart Village, Cairo, Egypt
+4Computer Engineering Department, Pharos University in Alexandria, Alexandria, Egypt
+5Computer Engineering Department, College of Engineering and Technology, Arab Academy for Science,
+Technology and Maritime Transport, Abou Kir, Alexandria, P .O. Box 1029, Egypt
+*noha.ghatwary@aast.edu
++All the authors contributed equally to this work
+ABSTRACT
+MRI-guided radiotherapy (MRIgRT) enables real-time visualization of tumor motion, allowing adaptive radiation delivery based
+on dynamic anatomical changes. However, respiratory-induced tumor motion remains a major challenge, particularly for
+thoracic and abdominal tumors. Continuous tumor motion may reduce treatment accuracy and increase radiation exposure
+to surrounding healthy tissues. Therefore, reliable and efficient tumor tracking is essential for real-time motion management
+in MRI-guided radiotherapy. Recent advances in artificial intelligence have demonstrated significant potential for medical
+image analysis; however, many existing tumor tracking approaches rely on segmentation-based methods that require detailed
+annotations and complex processing, which can limit their use in real-time clinical environments. In this work, we propose a
+detection-based tumor tracking framework that integrates the YOLOv11 object detection model with an enhanced StrongSORT
+tracking algorithm (EA-StrongSORT). The proposed approach replaces the conventional re-identification backbone with a
+lightweight EfficientNetV2 architecture augmented with an Efficient Channel Attention (ECA) mechanism. The overall framework
+follows a tracking-by-detection concept, where tumor regions are first detected and subsequently associated across frames.
+The proposed framework is evaluated on the TrackRAD2025 dataset using multiple YOLOv11 variants to analyze the balance
+between performance and model complexity. Experimental results demonstrate that lightweight YOLOv11n model achieve
+the best detection performance, with a precision of 0.914, mAP of 0.778, and mAP50−95 of 0.607. Furthermore, the proposed
+tracking framework achieves stable temporal association, with MOTA scores exceeding 91% and HOTA scores around 90%.
+The proposed framework provides an efficient and reliable solution for real-time tumor localization in cine-MRI.
+Introduction
+Magnetic resonance imaging (MRI) has become a fundamental component of modern radiation oncology due to its superior
+soft-tissue contrast and its ability to visualize tumors and surrounding organs without the use of ionizing radiation. Recent
+advances in MRI-guided radiotherapy, particularly hybrid MRI–linear accelerator systems, have enabled continuous image
+acquisition during treatment delivery and real-time monitoring. This capability offers significant clinical advantages, including
+improved target visualization, adaptive treatment strategies, and enhanced motion awareness. However, it also introduces
+challenges associated with dynamic anatomical changes during imaging and treatment delivery1, 2.
+Among the most critical sources of uncertainty in MRI-guided radiotherapy workflows is respiratory-induced motion. As
+patients breathe freely during scanning and treatment, tumors particularly in thoracic and upper-abdominal regions—undergo
+continuous displacement and deformation. If not adequately managed, this motion can result in misalignment between the
+planned and delivered radiation dose, potentially compromising tumor coverage. Therefore, accurate and continuous tumor
+localization is essential for safe and effective treatment3. In this context, tumor tracking in cine-MRI has emerged as a key
+enabling technology for real-time imaging and adaptive radiotherapy. Cine-MRI sequences capture dynamic anatomical
+
+
+===== PAGE 2 =====
+changes over time, providing a direct representation of respiratory motion and tumor movement. However, reliable tracking
+in cine-MRI remains challenging due to non-rigid tumor motion, intensity inhomogeneity, low contrast, and substantial
+inter-patient variability. In addition, clinical deployment imposes strict real-time constraints, often requiring sub-second
+per-frame processing to support applications such as beam gating and online treatment adaptation4.
+From a computational perspective, tumor tracking in cine-MRI extends beyond static localization and requires maintaining
+spatial and temporal consistency across sequential frames. This involves not only detecting the tumor in each frame but also
+preserving its identity over time despite respiratory motion, appearance variations, and imaging artifacts. Cine-MRI sequences
+may span hundreds to thousands of frames across multiple respiratory cycles, making temporal consistency a critical requirement
+for clinically viable tracking systems 5. Prior work on cine-MRI tumor tracking and MRI-guided radiotherapy highlights
+that clinically applicable solutions must ensure robustness, scalability, and computational efficiency while maintaining stable
+localization over long temporal sequences6. While segmentation-based and patient-specific deep learning approaches have
+demonstrated strong spatial accuracy, they often rely on dense annotations, patient-specific adaptation, or computationally
+expensive optimization procedures, which can limit their scalability and real-time applicability7, 8. These limitations motivate
+the exploration of detection-based tracking paradigms that enable efficient and continuous tumor localization without requiring
+pixel-wise annotations.
+Within this context, tumor tracking performance in this study is framed in terms of continuous localization accuracy and
+temporal association quality across sequential frames, rather than isolated frame-level detection results. This perspective aligns
+with clinical requirements, where stable and interpretable tracking outputs are essential for downstream applications such as
+motion monitoring, gating, and adaptive radiotherapy9, 10. By grounding the evaluation within the TrackRAD2025 benchmark5,
+this work aims to assess the effectiveness of detection-based tracking pipelines as a practical alternative to segmentation-driven
+approaches. Motivated by these challenges, this work investigates a detection-based tumor tracking framework that integrates
+YOLOv11 object detection with an enhanced StrongSORT tracking algorithm. The proposed approach replaces the original re-
+identification backbone with a lightweight EfficientNetV211 based architecture augmented with an Efficient Channel Attention
+(ECA) mechanism, improving feature representation while maintaining computational efficiency. The overall system follows a
+tracking-by-detection paradigm, where tumor regions are detected independently in each frame and subsequently associated
+across time. The framework is evaluated on the TrackRAD2025 dataset5 (i.e. Figure (1) shows example cine-MRI frames from
+the TrackRAD2025 dataset.) to assess its effectiveness for real-time tumor tracking in cine-MRI. The main contributions of this
+work are summarized as follows:
+• We propose a detection-based tumor tracking framework for cine-MRI that integrates YOLOv11 object detection with
+enhanced StrongSORT tracking algorithm, enabling efficient tracking-by-detection for real-time applications.
+• We introduce an improved tracking module, referred to as Efficient Attention StrongSORT (EA-StrongSORT). by replac-
+ing the original re-identification backbone with a proposed lightweight EfficientNetV2-based architecture augmented
+with Efficient Channel Attention (ECA) to enhance feature representation.
+• We validate the robustness of proposed framework through fold-based experiments, achieving consistent detection and
+tracking performance.
+Unlike existing StrongSort-based approaches, the proposed framework introduces a lightweight EfficientNetV2 backbone
+with selective attention only in deeper layers, combined with a detection-driven formulation tailored for cine-MRI tumor
+tracking under real-time constraints.
+Related work
+Recent advances in tumor tracking for MRI-guided radiotherapy have increasingly relied on artificial intelligence to address
+challenges such as respiratory motion, appearance variability, and real-time constraints. Accurate and stable tumor localization
+during cine-MRI acquisition is essential for effective motion management during treatment delivery. As a result, a wide range
+of algorithmic approaches has been developed, differing in how they address spatial localization, temporal consistency, and
+computational efficiency. These approaches can be broadly categorized into segmentation-based, memory-augmented, and
+motion estimation methods. One emerging direction in tumor tracking explores the use of foundation vision models. The work
+in7 investigates fine-tuning the Segment Anything Model (SAM) on the TrackRAD2025 dataset using sparse prompts such as
+bounding boxes or masks in the first frame, followed by frame-by-frame propagation. This approach achieves competitive
+performance, with Dice similarity scores approaching 0.88 while maintaining near real-time inference. However, such methods
+rely on prompt intialization and do not explicitly model object identity across frames, limiting their robustness for long- term
+and fully automated tracking, particularly under rapid tumor deformation or appearance variation. To explicitly address temporal
+consistency, memory-augmented segmentation-based tracking approaches have been proposed. In particular, XMem-based
+2/12
+
+
+===== PAGE 3 =====
+Figure 1.Example cine-MRI frames from the dataset. The first column shows thoracic cases; the second column shows time
+sequence of labeled frames from a 0.35 T MRI-linac5
+Table 1.Scaling parameters of the selected YOLOv11 variants, including depth, width and maximum channel configurations
+Model d (depth_multiple) w (width_multiple) mc (max_channels)
+n 0.50 0.25 1024
+s 0.50 0.50 1024
+l 1.00 1.00 512
+xl 1.00 1.25 512
+architectures12, utilize an external memory bank to store historical tumor representations and retrieve relevant appearance
+features across frames. Similarly, LesionLocator13 introduces a spatiotemporal framework that leverages temporal information
+for consistent tumor tracking across sequences. However, these methods introduce additional computational overhead and
+remain prone to error accumulation over long sequences, limiting their reliability in real-time clinical settings.
+Another line of work focuses on motion-resolved tumor segmentation as an indirect means of supporting tracking. The
+approach presented in14 employs deep neural networks to separate tumor motion from surrounding anatomy using time-resolved
+imaging, achieving improved robustness to motion artifacts and enhanced spatial accuracy compared to static segmentation
+models. In a related direction, DINOMotion15 leverages high-level features from DINOv2 to estimate tissue motion directly
+from cine-MRI sequences, enabling accurate alignment temporal across consecutive frames. However, these approaches
+primarily focus on motion modeling or registration rather than maintaining consistent tumor identity across frames, limiting
+their suitability for real-time tracking applications. Segmentation-based approaches using deep neural networks have also been
+explored for tumor tracking in medical imaging. For example, 3D-Net-based models have been applied to propagate tumor
+volumes across respiratory phases, achieving competitive segmentation accuracy8. In addition, AI-based systems have been
+developed for real-time tumor segmentation and tool tracking in interventional imaging scenarios16 . However, these approaches
+are often computationally expensive and rely on dense annotations, which limits their applicability in real-time cine-MRI
+tracking under continuous respiratory motion. Taken together, prior research highlights a growing shift toward data-driven
+and segmentation-based tumor tracking approaches, with promising results in accuracy and robustness. However, several
+challenges remain, particularly in achieving full automation, maintaining temporal consistency over long cine-MRI sequences,
+and ensuring computational efficiency under real–time constraints. Most existing methods rely heavily on segmentation-
+based paradigms and often lack robust mechanisms for long-term temporal association. In contrast, detection-based tracking
+formulations, such as those enabled by datasets like TrackRAD2025, offer an alternative perspective by framing tumor tracking
+as a detection-and-association problem. This motivates the exploration of lightweight detection-based tracking pipelines that
+can achieve stable and continuous tumor localization while maintaining real-time performance. In this context, the present work
+investigates a detection-based tracking framework that integrates efficient object detection with enhanced temporal association
+mechanism.
+3/12
+
+
+===== PAGE 4 =====
+Figure 2.Overview of the proposed tracking by detection framework. MRI sequences are first processed by the YOLOv11 to
+localize the tumor regions, followed by the proposed EA-StrongSORT tracking module which incorporates a modified
+EfficientNet-based feature extractor and enhanced attention mechanism for tracking.
+Proposed Framework
+In this section, we introduce the proposed tumor detection and tracking framework from cine-MRI sequences. The proposed
+framework employs YOLOv11 as the detection backbone for tumor localization, followed by an enhanced StrongSORT-based
+tracking module to ensure temporal consistency across frames. Unlike conventional StrongSORT pipelines that typically rely on
+YOLOX for object detection, YOLOv11 is adopted in this work to provide improved detection performance. To ensure robust
+temporal tracking, the detection module is combined with an enhanced StrongSORT pipeline named as Efficient Attention
+StrongSort (EA-StrongSort). The main contribution of the model is replacing the original ReID feature extractor StrongSORT
+with a lightweight EfficeintNEtV2 based backbone augmented with an Efficient Channel Attention (ECA) mechanism. This
+modification improves feature representation while maintaining low computational complexity. Figure 2 presents the overall
+framework and in the following section each phase will be described in detail.
+Tumor Detection using YOLOv11
+YOLOv11 is a state-of-the-art real-time object detection framework designed to balance high detection accuracy with com-
+putational efficiency17. YOLOv11 employs a single-stage decision paradigm similar to prior YOLO models, where object
+localization and classification are performed simultaneously within a unified neural network. This architecture eliminates the
+need for separate region proposal stages, facilitating efficient real-time performance. The model follows the typical YOLO
+design, compromising three primary components: the backbone, neck, and detection head.
+The backbone extracts hierarchical feature representations from the input images via a sequence of convolutional layers
+and feature extraction blocks, capturing both low-level visual patterns and high-level semantic information. The neck module
+subsequently aggregates and refines the extracted features to improve multi-scale object detection, typically integrating feature
+fusion mechanisms such as Feature Pyramid Network (FPN) and Path Aggregation Networks (PAN). These enhance the
+model’s ability to detect objects of different sizes by fusing information from multiple feature levels. Finally, the detection head
+produces the final predictions, including bounding box coordinates, object confidence scores, and class probabilities across
+multiple scales. This multi-scale approach improves the accuracy of detecting small, medium, and large objects within the
+same image. Through targeted architectural optimizations and enhanced feature representation, YOLOv11 achieves a balanced
+trade-off between computational efficiency, detection accuracy, and inference speed, making it suitable for a wide range of
+real-time computer vision applications.
+YOLOv11 provides multiple model variants, as shown in Table 1, including Nano, Small, Medium, and Large, to balance
+computational complexity, inference speed, and detection accuracy depending on the application requirements18. The YOLOv11-
+Nano is the most lightweight variant, optimized for resource-constrained environments and real-time applications, delivering
+fast inference with minimal computational overhead. The YOLOv11-Small model increases network capacity over the Nano
+4/12
+
+
+===== PAGE 5 =====
+Figure 3.Architecture of the proposed lightweight variant of the EfficientNetV2, where the number of MBConv and
+Fused-MBConv blocks are reduced.
+model, enhancing feature extraction and detection accuracy while preserving efficient processing speed. The YOLOv11-
+Medium variant further enhances architectural depth and parameter count, providing a balanced trade-off between accuracy
+and computational cost. In contrast, the YOLOv11-Large model represents the most complex configuration, incorporating
+deeper layers and a greater number of parameters to attain higher detection accuracy. In the context of tumor detection, these
+variants facilitate evaluation of model size impacts on the identification of tumor regions in medical images. Smaller models
+provide faster inference suitable for real-time or edge-based medical applications, while larger models offer improved feature
+representation that can enhance detection of subtle or small tumor regions. Consequently, comparative evaluation of these
+variants allows selection of the most appropriate YOLOv11 configuration for accurate and efficient tumor detection.
+Proposed Multi-object Tracking using EA-StrongSORT
+After detecting tumor regions using the YOLOv11 detector, a tracking module is required to maintain the temporal consistency
+of the detected objects across consecutive frames. Object detection processes each frame independently and therefore cannot
+guarantee that the same object will preserve its identity across time. For this reason, a multi-object tracking module is integrated
+after the detection stage to associate detections across frames and maintain consistent identities.
+In order to improve the appearance modeling capability of the tracking framework, a modified StrongSORT architecture
+is proposed in this work, a tracking framework based on the StrongSORT algorithm is adopted due to its effectiveness in
+multi-object tracking tasks 19. StrongSORT extends the DeepSORT tracking framework by improving appearance feature
+representation and association mechanisms, which allows more reliable tracking in challenging scenarios such as occlusion,
+motion variation, and appearance similarities20.
+The proposed model, known as Efficient Attention StrongSORT (EA-StrongSORT), introduces a lightweight but effective
+feature extraction backbone designed to enhance tracking robustness while maintaining computational efficiency. In the original
+StrongSORT architecture21, appearance features are extracted using a ResNet50 backbone. Although ResNet50 provides strong
+representation capability, it introduces relatively high computational complexity and may not efficiently capture the subtle
+visual differences between detected tumor regions in medical imaging22. To address this limitation, as shown in Figure 2, the
+proposed EA-StrongSORT replaces the original backbone with a modified EfficientNetV2-based architecture to improve feature
+extraction efficiency while maintaining strong representation capability.
+Figure. 3 presents the modified EfficientNetV2-based architecture where the pipeline begins with an initial convolution
+layer that captures low-level spatial information from the detected object regions. This layer is followed by a sequence of
+Fused-MBConv and MBConv blocks, which progressively extract hierarchical feature representations. The Fused-MBConv
+blocks are particularly effective in early stages of the network, where standard depthwise convolutions may slow down training.
+These blocks combine convolution and expansion operations into a single structure, allowing faster feature extraction with
+reduced computational overhead. Subsequently, deeper MBConv layers are used to capture higher-level semantic features
+that represent more complex visual patterns of tumor regions. These layers enable the network to generate discriminative
+representations that are essential for distinguishing between visually similar regions. Furthermore, the number of blocks at each
+stage is reduced compared to the original EfficientNetV2 ensuring lower computational costs while preserving essential feature
+5/12
+
+
+===== PAGE 6 =====
+Figure 4.Internal structure of the Modified MBConv layer, incorporating depthwise convolution followed by ECA (i.e.
+instead of SE) and point-wise convolution with residual connections.
+extraction capability. By reducing the number of Fused-MBConv and MBConv blocks within each stage from approximately
+40 blocks (10 Fused-MBConv and 30 MBConv) in the original EfficientNetV2 to around 22–25 blocks in the proposed
+architecture—the model achieves a depth reduction of about 40–45% empirically observed. This results in an estimated
+decrease of 35–45% in parameter count and up to 50% reduction in computational complexity (FLOPs), enabling faster
+inference while preserving discriminative feature representations for appearance-based tracking.
+To further enhance the discriminative capability of the appearance features, the feature extraction network is extended
+with an attention mechanism. In particular, an Efficient Channel Attention (ECA)23 module is integrated within the MBConv
+blocks in order to emphasize informative feature channels while suppressing irrelevant information. The ECA enhances feature
+representation by assigning adaptive importance weights to each channel. First, global average pooling ( GAP) is applied
+to the input feature map ( X), followed by one-dimensional convolution and sigmoid activation channel weights defined as
+w =σ(Conv1D(GAP(X))) . The refined feature map X′ = X ⊙ wis then obtained by channel-wise multiplication, emphasizing
+informative features while suppressing irrelevant features.
+As shown in 4, the modified MBConv block consists of a sequence of convolutional operations followed by a lightweight
+channel attention mechanism. First, depthwise convolution is applied to capture spatial feature representations from the detected
+object region. The extracted feature maps are then passed through the ECA module, which adaptively assigns importance
+weights to different feature channels. Unlike traditional attention mechanisms that rely on dimensionality reduction, the ECA
+module captures channel dependencies using a lightweight one-dimensional convolution. This design enables the model to
+improve feature representation without introducing significant computational overhead. After the attention weights are applied,
+a pointwise convolution (1×1 convolution) is used to fuse the enhanced feature channels and generate the final representation.
+Attention mechanisms are not uniformly beneficial across all network stages 24. Applying attention in early layers may
+introduce unnecessary complexity and noise, as these layers primarily capture low-level patterns. The reduction in the model
+compleixty makes the framework suitable for real-time clinical deployment. Therefore, in the proposed model, ECA is applied
+only in deeper layers where feature representations are more beneficial for tumor discrimination. The design choice supports the
+prevention of over-smoothing of features and reduces the risk of overfitting. These refined features are then used to construct
+appearance embeddings for each detected object. By incorporating channel attention into the feature extraction process, the
+proposed EA-StrongSORT framework becomes more capable of highlighting subtle visual patterns that distinguish different
+objects. This improvement leads to more discriminative appearance embeddings, which ultimately enhances the robustness of
+object association during tracking. The appearance embeddingf i =φ( xi) is extracted from the detected object region xi) using
+the feature extraction function φ(·), which presents the proposed EfficientNetV211 based backbone integrated with the ECA
+attention mechanism.
+During the tracking process, detections obtained from the YOLOv11 detector must be associated with existing object tracks
+across consecutive frames. This association step plays a critical role in maintaining consistent object identities throughout
+the tracking sequence. The association cost ( Ci j) measures the similarity between detected tumors ( i) and existing tumor
+tracks ( j). The association cost function is formulated to jointly optimize appearance similarity and motion consistency as
+follows Ci j =α·d appearance(fi, f j) + (1−α)·d motion(i,j) and dappearance =1− fi·f j
+∥fi∥ ∥fj∥, where, α controls the balance between
+appearance and motion cues. The appearance distance is computed using cosine similarity between features embedding, while
+the motion term is derived from spatial alignment metrics such as IoU or GIoU.
+In traditional tracking frameworks, the Intersection over Union (IoU) metric is commonly used to measure the spatial
+similarity between the predicted bounding box and the detected bounding box. IoU evaluates the overlap between two regions
+and provides a similarity score that ranges between 0 and 1. The IoU= |A∩B|
+|A∪B|, where A and B represent the predicted bounding
+box and the detected bounding box, respectively. Although IoU is widely used in object detection and tracking, it becomes less
+informative when the two bounding boxes do not overlap. In such cases, IoU produces a similarity score of zero, even when the
+predicted and detected boxes are spatially close to each other. This limitation can negatively affect the association process
+during tracking. To overcome this limitation, the proposed tracking framework adopts the Generalized Intersection over Union
+(GIoU)25 metric, which extends the IoU formulation by considering the smallest enclosing region that covers both bounding
+6/12
+
+
+===== PAGE 7 =====
+boxes. The GIoU metric can be defined as GIoU=IoU− |C−(A∪B)|
+|C| , where C denotes the smallest enclosing bounding box that
+contains both A and B. In this paper, dmotion is computed using the GIoU metric, which improves robustness when bounding
+boxes are partially misaligned or do not overlap. This improves the reliability of the matching process between predicted tracks
+and newly detected objects. As a result, the proposed EA-StrongSORT framework achieves more stable object association
+across frames, which contributes to the improved tracking performance observed in the experimental results.
+Material and Dataset
+Experiments are conducted using the TrackRAD2025 dataset5, a large-scale benchmark specifically designed for tumor tracking
+in cine-MRI sequences acquired during MRI-guided radiotherapy. The dataset comprises temporally dense image sequences that
+capture natural respiratory motion across multiple anatomical sites and imaging systems. It provides frame-level bounding-box
+annotations for tumor targets rather than pixel-wise segmentation masks, thereby naturally formulating tumor tracking as
+a tracking-by-detection problem with explicit temporal linking. This annotation design enables the evaluation of tracking
+pipelines that prioritize temporal continuity and identity preservation over detailed boundary delineation, which is particularly
+relevant for real-time clinical applications. The dataset further reflects substantial clinical variability, including differences in
+tumor size, anatomical location, imaging protocols, and motion patterns across patients.
+It includes thoracic, abdominal, and pelvic tumors acquired on different MRI-linac systems, with motion amplitudes
+varying according to anatomical site and breathing pattern. This diversity introduces challenges related to generalization and
+robustness, reinforcing the importance of tracking strategies that can maintain temporal consistency across heterogeneous
+imaging conditions. The dataset comprises 585 patients collected from 6 international centers, including thoracic, abdominal,
+and pelvic tumors acquired using both 0.35 T and 1.5 T MRI-linac systems. It provides over 2.8 million unlabeled cine-MRI
+frames from 477 patients and more than 10,000 annotated frames from 108 patients, with sequence lengths ranging from 20 to
+20,543 frames per scan. The dataset is split into 527 training cases (477 unlabeled, 50 labeled) and 58 fully labeled test cases,
+enabling large-scale evaluation for real-time tumor tracking under realistic clinical variability.
+Ethical Statement
+The dataset used in the study is publicly available and was obtained from the TrackRad2025 dataset5. The authors were not
+involved in the collection of human data. As stated in the original publication, all information was gathered by the original
+authors in compliance with applicable rules and regulations, with permission from the relevant institutional review boards,
+and with informed consent from each participant. The dataset was used in accordance with its licensing terms and applicable
+regulations.
+Results
+The detection performance of YOLOv11 framework was quantitatively evaluated using different model scales to establish
+baseline performance prior to applying fold-based training and tracking strategies. Four YOLOv11 variants were considered in
+this analysis, namely YOLOv11n, YOLOv11m, YOLOv11l, and YOLOv11xl. The evaluation metrics included precision, recall,
+mean Average Precision (mAP), and mAP@50-95, as summarized in Table 2. The YOLOv11n variant achieves the highest
+precision value (0.914), indicating a strong ability to correctly detect tumor regions while minimizing false positive predictions.
+In comparison, larger model variants exhibit a gradual reduction in recall, with YOLOv11xl achieving the lowest recall value
+(0.386). This behavior suggests that increasing model complexity does not necessarily translate into improved sensitivity for the
+given dataset. A similar trend is observed in the mAP results. YOLOv11n attains the highest overall mAP (0.778), followed by
+YOLOv11m (0.724), whereas YOLOv11l and YOLOv11xl demonstrate lower performance. The mAP@50-95 metric further
+confirms this observation, reflecting reduced robustness across stricter intersection-over-union thresholds for larger model
+configurations. Overall, these findings indicate that the smaller YOLOv11 variants provide a more effective balance between
+detection accuracy and generalization capability in this application. Based on these quantitative results, YOLOv11n is selected
+as the baseline detection model for subsequent experiments involving fold-based training and tracking integration.
+To further evaluate the robustness and generalization capability of the detection model, a fold-based training strategy was
+employed using the selected YOLOv11n configuration. The model was trained and evaluated across five different data folds
+and the detection performance for each fold was assessed using precision, recall, map, and map@50-95 metrics, as reported
+in Table 3. The results presented demonstrate consistent detection performance across all folds. Precision values remain
+stable with minimal variation between folds, indicating reliable localization of tumor regions across different data partitions.
+Similarly, recall values show limited fluctuation, suggesting that the model maintains a comparable sensitivity to tumor detection
+regardless of the specific training-testing split. The mAP and mAP@50-95 metrics further confirm the robustness of the
+fold-based approach. Although minor performance variations are observed across folds, the overall detection accuracy remains
+consistently high, reflecting strong generalization capability. These findings indicate that the observed detection performance is
+7/12
+
+
+===== PAGE 8 =====
+Table 2.Quantitative Detection Performance of YOLOv11 Model Variants, comparing precision, recall ,and mAP, and
+mAP50−95 across different model scales
+Model Precision Recall mAP mAP 50−95
+YOLOv11n 0.914 0.605 0.778 0.607
+YOLOv11m 0.867 0.553 0.724 0.561
+YOLOv11l 0.775 0.426 0.649 0.512
+YOLOv11xl 0.694 0.386 0.583 0.438
+not dependent on a single data split and that fold-based training contributes to more reliable and reproducible results. Overall,
+the fold-based evaluation validates the stability of the YOLOv11n detection model and supports its suitability for subsequent
+integration with the tracking framework.
+Table 3.Detection Performance of the YOLOv11n Model Across Five Training Folds comparing precision, recall and mAP,
+and mAP50−95
+Fold Precision Recall mAP mAP 50−95
+Fold 1 0.914 0.605 0.778 0.607
+Fold 2 0.918 0.612 0.767 0.614
+Fold 3 0.909 0.601 0.772 0.602
+Fold 4 0.919 0.617 0.784 0.617
+Fold 5 0.901 0.597 0.762 0.601
+To evaluate the effectiveness of the proposed tracking framework, the detection results obtained from the fold-trained
+YOLOv11n model were integrated with the modified StrongSORT algorithm. Tracking performance was quantitatively assessed
+across the same five folds used in the detection experiments, and the results are summarized in Table 4 using MOTA and HOTA
+metrics. As shown in Table 4, the tracking framework demonstrates stable performance across all folds. The MOTA values
+remain consistently high, indicating reliable object association and a low number of identity-related errors throughout the
+tracked sequences. Similarly, the HOTA metric shows limited variation across folds, reflecting balanced performance in terms
+of detection accuracy and association quality.
+The consistency of both MOTA and HOTA scores across different folds suggests that the proposed tracking approach is
+robust to variations in the training-testing splits. These results confirm that the integration of the modified StrongSORT tracker
+effectively enhances temporal consistency while maintaining reliable target association across frames. Overall, the tracking
+results demonstrate the suitability of the proposed detection tracking pipeline for applications requiring stable and continuous
+localization over time.
+Table 4.Tracking Performance of the Proposed Framework Using the Modified StrongSORT Algorithm Across Five Folds
+evaluating the MOTA and HOTA for each fold
+Fold MOTA (%) HOTA (%)
+Fold 1 92.86 90.67
+Fold 2 92.53 90.73
+Fold 3 91.88 89.21
+Fold 4 92.61 90.54
+Fold 5 92.64 90.59
+Qualitative detection results are presented to provide visual insight into the performance of the proposed detection framework.
+Figures 5 and 6 illustrate representative detection outputs generated by the YOLOv11 model across different frames. As
+shown in the figures, the model is able to localize the tumor region across variety of samples. The predicted bounding boxes
+generally align well with the annotated regions, demonstrating reliable spatial localization under different visual conditions.
+The confidence scores associated with the predictions remain consistent across frames, indicating stable detection behavior.
+These qualitative results complement the quantitative findings reported and provide additional visual evidence supporting the
+effectiveness of the proposed detection framework.
+To further assess the contribution of each component, an ablation study is conducted. The use of EfficientNetV2 reduces
+computational complexity while maintaining strong feature representation. in addition, the integration of the ECA mechanism
+8/12
+
+
+===== PAGE 9 =====
+(a)Ground Truth
+ (b)Proposed Method
+Figure 5.Qualitative comparison between ground truth annotations and tracking results obtained using the proposed
+YOLOv11 + EA-StrongSORT framework on the TrackRAD2025 dataset.
+enhances the discriminative capability of appearance embeddings, particularly in cases of subtle visual differences. furthermore,
+the use of GIoU improves spatial association and robustness compared to standard Iou-based matching. The quantitative
+results presented in Table 5 clearly support the effectiveness of the proposed modifications. it can be observed that each
+added component leads to a consistent improvement in both MOTA and HOTA scores. Specifically, incorporating GIoU
+improves tracking performance compared to the baseline model. further enhancement is achieved by replacing the backbone
+with EfficientNetV2. Finally the proposed EA-StrongSORT model achieves the best performance, reaching 92.50% MOTA
+and 90.35% HOTA. these results demonstrate that the proposed design choices collectively contribute to improved tracking
+accuracy and temporal consistency
+Table 5.Ablation experiment for model improvement justification measuring the YOLOv11n performance with and without
+modified StrongSORT
+Model MOTA (%) HOTA (%)
+YOLOv11n + Original StrongSORT 88.57 85.49
+YOLOv11n + StrongSORT + GIoU 90.14 87.37
+YOLOv11n + StrongSORT with Original EfficientNetV2 + GIoU 91.36 89.83
+YOLOv11n + EA-StrongSORT (Proposed Model) 92.50 90.35
+Discussion
+This study presents a comprehensive evaluation of a YOLOv11-based detection framework integrated with fold-based training
+and a modified StrongSORT tracking module for tumor detection and tracking. The discussion interprets the results obtained
+and highlights the key observations derived from both quantitative and qualitative results.
+The quantitative detection results demonstrate that model scale plays a critical role in overall detection performance.
+Among the evaluated YOLOv11 variants, the smaller model configuration achieves superior performance in terms of precision,
+recall, and mAP metrics. This observation suggests that increasing model complexity does not necessarily improve the
+detection accuracy of the data set studied. Given the relatively limited size and variability of the cine-MRI data, larger
+models such as YOLOv11l and YOLOv11xl are more prone to overfitting and may fail to generalize effectively. In addition,
+9/12
+
+
+===== PAGE 10 =====
+(a)Ground Truth
+ (b)Proposed Method
+Figure 6.Qualitative comparison between ground truth annotations and tracking results obtained using the proposed
+YOLOv11 + EA-StrongSORT framework on the TrackRAD2025 dataset.
+the subtle appearance features of tumor regions in MRI, combined with relatively homogenous backgrounds, reduce the
+need for highly complex feature representations. As a result, the increased parameter size of larger models may introduce
+unnecessary complexity without providing additional discriminative features. In contrast, the YOLOv11n model provides an
+appropriate balance between representational capacity and generalization ability, enabling more reliable tumor localization.
+This is considered beneficial for medical imaging applications where lightweight models often perform more robustly due to
+the subtle and domain-specific nature of visual features.
+The fold-based evaluation provides further insight into the stability and reliability of the proposed detection framework.
+The consistent performance observed across all folds confirms that the detection results are not dependent on a specific data
+split. Minor variations in precision, recall and mAP values across folds are expected and can be explained by variations in the
+distribution of samples. Nevertheless, the overall stability indicates strong generalization capability. This robust performance
+is important in the medical domain, where variability across patients and acquisition conditions is common. Therefore, the
+fold-based results support the validity and consistency of the proposed detection method.
+The integration of the modified StrongSORT tracking module further enhances the proposed framework by enabling
+reliable temporal association across frames. The consistently high MOTA and HOTA scores obtained across all folds indicate
+effectiveness across tracking sequences. Temporal consistency is a critical requirement in cine-MRI analysis, as it ensures
+continuous and stable tumor localization despite respiratory-induced motion. The results demonstrate that the combination
+of YOLOv11-based detection with the modified tracking strategy provides a robust detection-tracking pipeline capable of
+maintaining consistent tumor localization over time. Furthermore, the qualitative detection results provide visual confirmation
+of the quantitative findings. The presented examples illustrate accurate tumor localization across representative samples, with
+predicted bounding boxes closely aligned with the annotated regions. These visual results support the observed detection
+accuracy and demonstrate the practical effectiveness of the proposed approach under varying visual conditions. While
+qualitative analysis does not replace quantitative evaluation, it offers valuable insight into the behavior of the detection model
+and complements the reported numerical metrics.
+Overall, the results demonstrate that combining a lightweight detection model with an efficient and robust tracking strategy
+yields a reliable solution for continuous tumor localization in cine-MRI. This highlights the importance of aligning model
+complexity with dataset properties, in addition to, the advantage of integrating detection and tracking modules to achieve high
+performance in medical imaging.
+10/12
+
+
+===== PAGE 11 =====
+Conclusion
+This study presented a detection-based tumor tracking framework for cine_MRI sequences by integrating YOLOv11 with
+a modified EA-StrongSORT tracking module. The proposed approach replaces the original StrongSORT backbone with a
+lightweight EfficientNetV2-based architecture and introduces a selective attention mechanism to enhance feature representation.
+Unlike conventional designs, attention is applied only in the deeper network layers, improving discriminative capability
+while avoiding additional computational overhead. The experimental results on the TrackRAD2025 dataset demonstrate that
+lightweight detection models, particularly YOLOv11n, provide a strong balance between accuracy and generalization. The
+integration of the proposed tracking module further improves the temporal consistency, achieving stable and reliable tumor
+localization across frames. The proposed framework highlights the effectiveness of combining the lightweight architecture
+with a selective attention mechanism for real-time tracking tasks. This design achieves improved efficiency and robustness,
+making it suitable for clinical implementation where both accuracy and computational costs are essential. Future work will
+focus on validating the proposed approach on larger multi-center datasets, exploring advanced temporal modeling strategies,
+and extending the framework to more complex multi-class tracking frameworks.
+References
+1. Rabe, M., Kurz, C., Thummerer, A. & Landry, G. Artificial intelligence for treatment delivery: image-guided radiotherapy.
+Strahlentherapie und Onkologie201, 283–297, DOI: 10.1007/s00066-024-02277-9 (2025). Epub 2024 Aug 13.
+2. Duke, K. & Papanikolaou, N. Artificial intelligence in radiation therapy: from imaging to delivery—a comprehensive
+review.BJR|Artificial Intell.2, ubaf012, DOI: 10.1093/bjrai/ubaf012 (2025).
+3. Hurkmans, C.et al.A joint estro and aapm guideline for development, clinical validation and reporting of artificial
+intelligence models in radiation therapy.Radiother. Oncol.197, 110345, DOI: 10.1016/j.radonc.2024.110345 (2024).
+4. Pohl, M., Uesaka, M., Takahashi, H., Demachi, K. & Chhatkuli, R. B. Frame forecasting in cine mri using the pca
+respiratory motion model: Comparing recurrent neural networks trained online and transformers.Comput. Med. Imaging
+Graph.102755 (2026).
+5. Wang, Y .et al.Trackrad2025 challenge dataset: real-time tumor tracking for mri-guided radiotherapy.Med. physics52,
+e17964 (2025).
+6. Zhang, X., Yan, D., Xiao, H. & Zhong, R. Modeling of artificial intelligence-based respiratory motion prediction in
+mri-guided radiotherapy: a review.Radiat. Oncol.19, 140, DOI: 10.1186/s13014-024-02532-4 (2024).
+7. Boussot, V ., Hémon, C., Nunes, J.-C. & Dillenseger, J.-L. Fine-tuning segment anything for real-time tumor tracking in
+cine-mri.arXiv preprint arXiv:2510.25990(2025).
+8. Lombardo, E.et al.Patient-specific deep learning tracking framework for real-time 2d target localization in magnetic
+resonance imaging-guided radiation therapy.Int. J. Radiat. Oncol. Biol. Phys.122, 827–837, DOI: 10.1016/j.ijrobp.2024.
+10.021 (2025).
+9. Lombardo, E.et al.Real-time motion management in mri-guided radiotherapy: Current status and ai-enabled prospects.
+Radiother. Oncol.190, 109970, DOI: 10.1016/j.radonc.2023.109970 (2024).
+10. Alshomrani, F. Recent advances in magnetic resonance imaging for the diagnosis of liver cancer: A comprehensive review.
+Diagnostics15, DOI: 10.3390/diagnostics15162016 (2025).
+11. Tan, M. & Le, Q. Efficientnetv2: Smaller models and faster training. InInternational conference on machine learning,
+10096–10106 (PMLR, 2021).
+12. Deng, P. & Chen, S. Enhancing real-time tumor tracking in cine-mri using memory-augmented video object segmentation.
+arXiv preprint arXiv:2509.18591(2025).
+13. Rokuss, M.et al.Lesionlocator: Zero-shot universal tumor segmentation and tracking in 3d whole-body imaging. In
+Proceedings of the Computer Vision and Pattern Recognition Conference, 30872–30885 (2025).
+14. Sarkar, S., Teo, P. T. & Abazeed, M. E. Deep learning for automated, motion-resolved tumor segmentation in radiotherapy.
+J. Transl. Medicine9, 1–8, DOI: 10.1038/s41698-025-00970-1 (2025).
+15. Salari, S.et al.Dinomotion: Advanced robust tissue motion tracking with dinov2 in 2d -cine mri-guided radiotherapy.
+IEEE Transactions on Biomed. Eng.1–14 (August 2025).
+16. Shao, X., Shen, Y . & Sun, P. e. a. Real-time deep learning for tumor segmentation and tool tracking: development and
+validation of an ai navigation system in vacuum-assisted breast biopsy.World J Surg Onc23, 1–12, DOI: 10.1186/
+s12957-025-04087-4 (2025).
+11/12
+
+
+===== PAGE 12 =====
+17. Khanam, R. & Hussain, M. Yolov11: An overview of the key architectural enhancements.arXiv preprint arXiv:2410.17725
+(2024).
+18. Khan, A. T. & Jensen, S. M. Leaf-net: A unified framework for leaf extraction and analysis in multi-crop phenotyping
+using yolov11.Agriculture15, 196 (2025).
+19. Khalil, M. M., Saleh, S. N., Tawfik, N. S. & Elagamy, M. N. Ef-strongsort: An enhanced feature strongsort model for
+multi-object tracking.IEEE Access(2025).
+20. Magdy, S., Youssef, S., Fathalla, K. M. & Elshehaby, S. Deepsteg: Integerating new paradigms of cascaded deep video
+steganography for securing digital data.Alex. Eng. J.116, 483–501 (2025).
+21.Du, Y .et al.Strongsort: Make deepsort great again.IEEE Transactions on Multimed.25, 8725–8737 (2023).
+22. Altaf, F., Islam, S. M., Akhtar, N. & Janjua, N. K. Going deep in medical image analysis: concepts, methods, challenges,
+and future directions.Ieee Access7, 99540–99572 (2019).
+23. Wang, Q.et al.Eca-net: Efficient channel attention for deep convolutional neural networks. InProceedings of the
+IEEE/CVF conference on computer vision and pattern recognition, 11534–11542 (2020).
+24. Soydaner, D. Attention mechanism in neural networks: where it comes and where it goes.Neural Comput. Appl.34,
+13371–13385 (2022).
+25. Rezatofighi, H.et al.Generalized intersection over union: A metric and a loss for bounding box regression. InProceedings
+of the IEEE/CVF conference on computer vision and pattern recognition, 658–666 (2019).
+Declaration
+• Author contributions statement: N.G, A.A, S.M and A.H designed the methodology. S.M and A.H implemented the
+model and conducted all the experiments. A.I.A and R.K performed validation. All authors contributed in writing and
+reviewing the manuscript. The corresponding author is responsible for submitting all documents on behalf of all authors
+of the paper.
+• Competing interests: The authors declare no competing interests
+• Funding: The authors have no relevant financial or non-financial interests to disclose.
+• Ethics declarations and consent to participate: This study used publicly available data from the TrackRad2025 dataset5.
+The authors were not involved in data collection. Ethical approval and informed consent were obtained by the original
+data creators as described in their publication. The present studies use the data in accordance with all relevant guidelines,
+regulations, and licensing terms.
+• Dataset : The data is publicly available under the TrackRAD2025 collection: https://doi.org/10.57967/hf/
+4539.
+• Consent for publication: We confirm that the manuscript represents our own work, is original, and has not been
+copyrighted, published, submitted, or accepted for publication elsewhere. We further confirm that we all have fully read
+the manuscript and give consent to be co-authors of the manuscript.
+12/12
