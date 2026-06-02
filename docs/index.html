@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="CholecTrack20 Benchmark - a reproducible surgical AI benchmark comparing YOLO11, EfficientDet-D0, and EA-StrongSORT on CholecTrack20."
+  />
+  <meta property="og:title" content="CholecTrack20 Benchmark" />
+  <meta
+    property="og:description"
+    content="A reproducible computer vision benchmark comparing detector baselines and multi-object tracking performance on CholecTrack20 surgical video data."
+  />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#07111f" />
+  <title>CholecTrack20 Benchmark | Abdullah Al Wazzan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="background-glow glow-one" aria-hidden="true"></div>
+  <div class="background-glow glow-two" aria-hidden="true"></div>
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Go to top">
+      <span class="brand-mark">C</span>
+      <span>CholecTrack20 Benchmark</span>
+    </a>
+
+    <button class="nav-toggle" aria-label="Open navigation" aria-expanded="false" type="button">
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="nav-links" aria-label="Primary navigation">
+      <a href="#problem">Problem</a>
+      <a href="#scope">Scope</a>
+      <a href="#detection">Detection</a>
+      <a href="#tracking">Tracking</a>
+      <a href="#methodology">Methodology</a>
+      <a href="#skills">Skills</a>
+      <a href="#reproducibility">Reproducibility</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero section-shell">
+      <div class="hero-copy reveal">
+        <p class="eyebrow">AI & Data Science Portfolio Case Study</p>
+        <h1>Surgical tool detection and tracking benchmark using YOLO11, EfficientDet-D0, and EA-StrongSORT.</h1>
+        <p class="hero-subtitle">
+          A reproducible computer vision benchmark comparing detector baselines and multi-object tracking performance
+          on CholecTrack20 surgical video data.
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://github.com/b3d012/CholecTrack20-Benchmark" target="_blank" rel="noreferrer">
+            View GitHub Repo
+          </a>
+          <a class="btn btn-secondary" href="https://b3d012.github.io/" target="_blank" rel="noreferrer">
+            Back to Portfolio
+          </a>
+        </div>
+
+        <div class="hero-pills" aria-label="Project labels">
+          <span class="chip">Surgical AI</span>
+          <span class="chip">Benchmarking</span>
+          <span class="chip">Computer Vision</span>
+          <span class="chip">Reproducible Workflow</span>
+        </div>
+      </div>
+
+      <aside class="hero-card reveal" aria-label="Project summary card">
+        <div class="terminal-card">
+          <div class="terminal-top">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="terminal-body">
+            <p><span class="prompt">project</span> CholecTrack20 Benchmark</p>
+            <p><span class="prompt">focus</span> Detection + Multi-object Tracking</p>
+            <p><span class="prompt">models</span> YOLO11, EfficientDet-D0, EA-StrongSORT</p>
+            <p><span class="prompt">scope</span> CholecTrack20 surgical video data</p>
+            <p class="typing-line"><span class="prompt">status</span> <span id="typing-text"></span><span class="cursor">|</span></p>
+          </div>
+        </div>
+
+        <div class="stats-grid hero-stats">
+          <article class="stat-card">
+            <strong>YOLO11</strong>
+            <span>baseline detector</span>
+          </article>
+          <article class="stat-card">
+            <strong>EfficientDet-D0</strong>
+            <span>benchmark detector</span>
+          </article>
+          <article class="stat-card">
+            <strong>EA-StrongSORT</strong>
+            <span>tracking evaluation</span>
+          </article>
+          <article class="stat-card">
+            <strong>CholecTrack20</strong>
+            <span>surgical video data</span>
+          </article>
+        </div>
+      </aside>
+    </section>
+
+    <section id="problem" class="section-shell section-block reveal">
+      <div class="section-heading">
+        <p class="eyebrow">Problem</p>
+        <h2>Why this benchmark exists</h2>
+        <p>
+          Surgical AI systems need reliable detection and tracking of instruments across challenging video conditions.
+          This project benchmarks detector and tracker performance on CholecTrack20 to study how well models handle
+          surgical tool localization and multi-object tracking.
+        </p>
+      </div>
+
+      <div class="feature-grid single-row">
+        <article class="feature-card">
+          <div class="icon">01</div>
+          <h3>Detection quality</h3>
+          <p>Measure whether models can locate surgical tools accurately across tools, scenes, and visual difficulty.</p>
+        </article>
+        <article class="feature-card">
+          <div class="icon">02</div>
+          <h3>Tracking continuity</h3>
+          <p>Check whether the tracker maintains identities across visibility, intracorporeal, and intraoperative perspectives.</p>
+        </article>
+        <article class="feature-card">
+          <div class="icon">03</div>
+          <h3>Real project constraints</h3>
+          <p>Report results honestly within the compute, time, and parameter-sweep budget that was available.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="scope" class="section-shell section-block reveal">
+      <div class="section-heading split-heading">
+        <div>
+          <p class="eyebrow">Dataset and scope</p>
+          <h2>Benchmark reference, not dataset contribution</h2>
+        </div>
+      </div>
+
+      <div class="panel-grid">
+        <article class="glass-panel">
+          <span class="panel-label">Dataset</span>
+          <h3>CholecTrack20</h3>
+          <p>
+            The project uses CholecTrack20 as the benchmark dataset for detector and tracker comparison.
+          </p>
+          <ul class="compact-list">
+            <li>This repo is a benchmark reference, not a dataset contribution.</li>
+            <li>Datasets, checkpoints, generated logs, and large exports are intentionally excluded from Git.</li>
+            <li>Small benchmark summaries, configs, and source code are tracked for public review.</li>
+          </ul>
+        </article>
+
+        <article class="glass-panel accent-panel">
+          <span class="panel-label">Interpretation</span>
+          <h3>How to read the results</h3>
+          <p>
+            The numbers on this page should be read as real-world project results under compute, time, and
+            parameter-sweep limits, not as an unconstrained global optimum.
+          </p>
+          <div class="mini-callout">
+            <strong>Reference context:</strong>
+            <p>
+              The official CAMMA CholecTrack20 repository publishes its own benchmark leaderboards.
+              That context is useful, but this page is a local benchmark story and should not be treated as a direct
+              leaderboard submission.
+            </p>
+            <p>
+              For reference, the official repo reports much stronger numbers on its own protocol, including detector
+              rows such as YOLOv10 around 80.1 AP0.5 and tracking rows such as Bot-SORT around 69.6 MOTA on the
+              visibility perspective. Those results are useful context, but they are not directly comparable to this
+              local benchmark.
+            </p>
+            <a href="https://github.com/CAMMA-public/cholectrack20" target="_blank" rel="noreferrer">Official CholecTrack20 repo -></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="detection" class="section-shell section-block reveal">
+      <div class="section-heading">
+        <p class="eyebrow">Detection benchmark</p>
+        <h2>Recorded detector runs</h2>
+        <p>
+          These are the best-known or recorded runs in this repository. They are presented for comparison rather than
+          as a claim of global optimality.
+        </p>
+      </div>
+
+      <div class="results-grid">
+        <article class="result-card">
+          <div class="result-top">
+            <span class="result-badge">EfficientDet-D0</span>
+            <span class="result-meta">Best recorded run</span>
+          </div>
+          <h3>EfficientDet-D0-640-AdamW-lr2e4</h3>
+          <div class="metric-row">
+            <div><strong>44.4</strong><span>AP0.5</span></div>
+            <div><strong>31.2</strong><span>AP0.75</span></div>
+            <div><strong>27.9</strong><span>AP0.5:0.95</span></div>
+            <div><strong>20.9</strong><span>FPS</span></div>
+          </div>
+          <p class="result-note">Best EfficientDet detector run recorded in the repository.</p>
+          <a class="inline-link" href="https://github.com/b3d012/CholecTrack20-Benchmark/blob/main/benchmarks/detection/efficientdet_detection_results.csv" target="_blank" rel="noreferrer">
+            Open benchmark table ->
+          </a>
+        </article>
+
+        <article class="result-card">
+          <div class="result-top">
+            <span class="result-badge secondary">YOLO11</span>
+            <span class="result-meta">Historical baseline</span>
+          </div>
+          <h3>YOLO11-img768-SGD</h3>
+          <div class="metric-row">
+            <div><strong>40.3</strong><span>AP0.5</span></div>
+            <div><strong>29.6</strong><span>AP0.75</span></div>
+            <div><strong>26.6</strong><span>AP0.5:0.95</span></div>
+            <div><strong>62.9</strong><span>FPS</span></div>
+          </div>
+          <p class="result-note">Historical baseline kept for comparison with the EfficientDet benchmark.</p>
+          <a class="inline-link" href="https://github.com/b3d012/CholecTrack20-Benchmark/blob/main/benchmarks/detection/yolo11_detection_results.md" target="_blank" rel="noreferrer">
+            Open benchmark table ->
+          </a>
+        </article>
+      </div>
+    </section>
+
+    <section id="tracking" class="section-shell section-block reveal">
+      <div class="section-heading">
+        <p class="eyebrow">Tracking benchmark</p>
+        <h2>EA-StrongSORT evaluation</h2>
+        <p>Class-aware IoU &gt;= 0.5 on annotated CholecTrack20 frames.</p>
+      </div>
+
+      <div class="table-panel">
+        <div class="table-scroll">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>Perspective</th>
+                <th>MOTA</th>
+                <th>IDF1</th>
+                <th>Precision</th>
+                <th>Recall</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>visibility</td>
+                <td>20.974</td>
+                <td>24.172</td>
+                <td>68.692</td>
+                <td>58.952</td>
+              </tr>
+              <tr>
+                <td>intracorporeal</td>
+                <td>19.641</td>
+                <td>12.158</td>
+                <td>68.692</td>
+                <td>58.952</td>
+              </tr>
+              <tr>
+                <td>intraoperative</td>
+                <td>19.314</td>
+                <td>6.298</td>
+                <td>68.692</td>
+                <td>58.952</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-footnote">
+          <p>
+            These are the strongest tracked results recorded in this repository. The tracking summaries are also
+            available in the public benchmark files.
+          </p>
+          <a class="inline-link" href="https://github.com/b3d012/CholecTrack20-Benchmark/tree/main/benchmarks/tracking" target="_blank" rel="noreferrer">
+            Open tracking benchmark files ->
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="methodology" class="section-shell section-block reveal">
+      <div class="section-heading">
+        <p class="eyebrow">Methodology</p>
+        <h2>End-to-end pipeline</h2>
+      </div>
+
+      <div class="timeline">
+        <article class="timeline-item">
+          <span class="timeline-index">1</span>
+          <div>
+            <h3>Prepare CholecTrack20 data and annotations</h3>
+            <p>Set up the dataset locally and convert the annotation structure needed for the benchmark pipeline.</p>
+          </div>
+        </article>
+        <article class="timeline-item">
+          <span class="timeline-index">2</span>
+          <div>
+            <h3>Train and evaluate detector baselines</h3>
+            <p>Run YOLO11 and EfficientDet-D0 experiments under controlled training settings.</p>
+          </div>
+        </article>
+        <article class="timeline-item">
+          <span class="timeline-index">3</span>
+          <div>
+            <h3>Compare YOLO11 and EfficientDet-D0 metrics</h3>
+            <p>Review AP, per-class, challenge, and runtime results to identify the stronger detector candidate.</p>
+          </div>
+        </article>
+        <article class="timeline-item">
+          <span class="timeline-index">4</span>
+          <div>
+            <h3>Use stronger detector output for tracking</h3>
+            <p>Feed the selected detector into EA-StrongSORT for frame-by-frame surgical tool tracking.</p>
+          </div>
+        </article>
+        <article class="timeline-item">
+          <span class="timeline-index">5</span>
+          <div>
+            <h3>Evaluate across three tracking perspectives</h3>
+            <p>Measure visibility, intracorporeal, and intraoperative track continuity under class-aware MOT evaluation.</p>
+          </div>
+        </article>
+        <article class="timeline-item">
+          <span class="timeline-index">6</span>
+          <div>
+            <h3>Record compact benchmark summaries</h3>
+            <p>Store the final summaries in `benchmarks/` for review, comparison, and public sharing.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="structure" class="section-shell section-block reveal">
+      <div class="section-heading">
+        <p class="eyebrow">Repository structure</p>
+        <h2>Clean project layout</h2>
+      </div>
+
+      <div class="code-panel">
+        <pre><code>DeepLearningProject/
+├── benchmarks/
+├── configs/
+├── src/
+├── dataset/        # local only, ignored by Git
+├── results/        # local outputs, ignored by Git
+└── runs/           # local detector/tracking outputs, ignored by Git</code></pre>
+      </div>
+    </section>
+
+    <section id="skills" class="section-shell section-block reveal">
+      <div class="section-heading">
+        <p class="eyebrow">Skills demonstrated</p>
+        <h2>What this project shows</h2>
+      </div>
+
+      <div class="tag-cloud">
+        <span>PyTorch</span>
+        <span>Ultralytics YOLO</span>
+        <span>EfficientDet</span>
+        <span>COCO-style Evaluation</span>
+        <span>StrongSORT</span>
+        <span>MOT Evaluation</span>
+        <span>Computer Vision</span>
+        <span>Surgical AI</span>
+        <span>Benchmarking</span>
+        <span>Experiment Management</span>
+        <span>Reproducible Workflow Design</span>
+        <span>Technical Documentation</span>
+      </div>
+    </section>
+
+    <section id="reproducibility" class="section-shell section-block reveal">
+      <div class="section-heading">
+        <p class="eyebrow">Reproducibility</p>
+        <h2>Setup and smoke checks</h2>
+        <p>
+          The dataset, checkpoints, generated reports, and large exports are not committed. Place the CholecTrack20
+          dataset and annotations locally before reproducing runs.
+        </p>
+      </div>
+
+      <div class="panel-grid">
+        <article class="glass-panel">
+          <span class="panel-label">Environment</span>
+          <pre><code>conda env create -f environment.yml
+conda activate deep_learning_project
+python -m src.train check-env</code></pre>
+        </article>
+        <article class="glass-panel">
+          <span class="panel-label">Smoke checks</span>
+          <pre><code>python -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())"
+python -m pip check
+python -c "import cv2, boxmot, pycocotools, motmetrics; print('tracking deps ok')"</code></pre>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-shell section-block reveal">
+      <div class="section-heading">
+        <p class="eyebrow">Summary</p>
+        <h2>Recruiter-friendly project takeaway</h2>
+      </div>
+
+      <div class="summary-panel">
+        <p>
+          This project demonstrates applied computer vision, detector benchmarking, multi-object tracking evaluation,
+          reproducible experiment design, and honest reporting of results under real project constraints.
+        </p>
+      </div>
+    </section>
+
+    <section class="section-shell section-block reveal footer-cta">
+      <div>
+        <p class="eyebrow">Ready for review</p>
+        <h2>Built for GitHub Pages, CV links, and portfolio presentation.</h2>
+      </div>
+      <div class="contact-actions">
+        <a class="btn btn-primary" href="https://github.com/b3d012/CholecTrack20-Benchmark" target="_blank" rel="noreferrer">View GitHub Repo</a>
+        <a class="btn btn-secondary" href="https://b3d012.github.io/" target="_blank" rel="noreferrer">Back to Portfolio</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div>
+      <p class="footer-name">Abdullah Al Wazzan</p>
+      <p>AI & Data Science</p>
+      <p>Surgical AI / Computer Vision Benchmark</p>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/b3d012/CholecTrack20-Benchmark" target="_blank" rel="noreferrer">GitHub Repo</a>
+      <a href="https://b3d012.github.io/" target="_blank" rel="noreferrer">Portfolio</a>
+    </div>
+    <p class="copyright">(c) <span id="year"></span> Abdullah Al Wazzan. Built with HTML, CSS, and JavaScript.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
