@@ -134,6 +134,12 @@ The tracked benchmark summaries live under `benchmarks/`:
 - `benchmarks/tracking/strongsort_tracking_evaluation.csv`
 - `benchmarks/tracking/strongsort_tracking_evaluation_class_agnostic.csv`
 - `benchmarks/tracking/strongsort_tracking_per_video.csv`
+- `benchmarks/notes/EA_STRONGSORT_TRACKING_RESULTS.md`
+- `benchmarks/notes/EA_STRONGSORT_TRACKING_EVALUATION.md`
+- `benchmarks/notes/EA_STRONGSORT_TRACKING_EVALUATION_CLASS_AGNOSTIC.md`
+- `benchmarks/notes/EFFICIENTDET_HYPERPARAMETER_COMPARISON.md`
+- `benchmarks/summary/project_experiment_summary_for_drs.md`
+- `benchmarks/summary/project_experiment_summary_for_drs.csv`
 
 ## Reproducibility Notes
 

@@ -41,6 +41,7 @@
       <a href="#scope">Scope</a>
       <a href="#detection">Detection</a>
       <a href="#tracking">Tracking</a>
+      <a href="#figures">Figures</a>
       <a href="#methodology">Methodology</a>
       <a href="#skills">Skills</a>
       <a href="#reproducibility">Reproducibility</a>
@@ -292,6 +293,89 @@
             Open tracking benchmark files ->
           </a>
         </div>
+      </div>
+    </section>
+
+    <section id="evidence" class="section-shell section-block reveal">
+      <div class="section-heading">
+        <p class="eyebrow">Visual evidence</p>
+        <h2>Representative qualitative cases</h2>
+        <p>
+          These recorded scenarios capture the kinds of surgical frames the benchmark had to handle, including clear
+          views and difficult conditions such as occlusion, smoke, blur, reflection, and foul lens.
+        </p>
+      </div>
+
+      <div class="case-grid">
+        <article class="case-card">
+          <span class="panel-label">Clear</span>
+          <h3>Clear standard tracking case</h3>
+          <p>2 detections | avg confidence 0.991</p>
+        </article>
+        <article class="case-card">
+          <span class="panel-label">Baseline</span>
+          <h3>Clear multi-tool case with specimen bag</h3>
+          <p>4 detections | avg confidence 0.932</p>
+        </article>
+        <article class="case-card">
+          <span class="panel-label">Crowded</span>
+          <h3>Crowded multi-instrument case</h3>
+          <p>4 detections | avg confidence 0.998</p>
+        </article>
+        <article class="case-card">
+          <span class="panel-label">Smoke</span>
+          <h3>Smoke and bleeding case</h3>
+          <p>4 detections | avg confidence 0.947</p>
+        </article>
+        <article class="case-card">
+          <span class="panel-label">Blur</span>
+          <h3>Blur case</h3>
+          <p>3 detections | avg confidence 1.000</p>
+        </article>
+        <article class="case-card">
+          <span class="panel-label">Occlusion</span>
+          <h3>Foul lens case</h3>
+          <p>3 detections | avg confidence 0.999</p>
+        </article>
+      </div>
+
+      <div class="table-footnote">
+        <p>
+          The project also recorded reflection and trocar / undercoverage examples, which are useful for discussing
+          robustness and failure modes in the final case study.
+        </p>
+        <a class="inline-link" href="https://github.com/b3d012/CholecTrack20-Benchmark/tree/main/benchmarks" target="_blank" rel="noreferrer">
+          Browse benchmark files ->
+        </a>
+      </div>
+    </section>
+
+    <section id="figures" class="section-shell section-block reveal">
+      <div class="section-heading">
+        <p class="eyebrow">Project figures</p>
+        <h2>Selected visuals from the benchmark package</h2>
+        <p>
+          These visuals help communicate the benchmark workflow, detector behavior, and tracking output at a glance.
+        </p>
+      </div>
+
+      <div class="figure-grid">
+        <figure class="media-card wide">
+          <img src="assets/architecture_diagram2.png" alt="Project architecture diagram" loading="lazy" decoding="async" />
+          <figcaption>Architecture diagram for the benchmark workflow.</figcaption>
+        </figure>
+        <figure class="media-card">
+          <img src="assets/tracking_sample_1.png" alt="Tracking sample 1" loading="lazy" decoding="async" />
+          <figcaption>Tracking sample 1: representative detection output.</figcaption>
+        </figure>
+        <figure class="media-card">
+          <img src="assets/tracking_sample_2.png" alt="Tracking sample 2" loading="lazy" decoding="async" />
+          <figcaption>Tracking sample 2: crowded surgical scene.</figcaption>
+        </figure>
+        <figure class="media-card">
+          <img src="assets/tracking_sample_3.png" alt="Tracking sample 3" loading="lazy" decoding="async" />
+          <figcaption>Tracking sample 3: difficult multi-tool frame.</figcaption>
+        </figure>
       </div>
     </section>
 
