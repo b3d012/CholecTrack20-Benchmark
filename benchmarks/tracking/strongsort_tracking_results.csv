@@ -1,0 +1,4 @@
+perspective,tracker,status,sequences,mot_rows,reported_ids,reported_speed,notes
+visibility,strongsort,ok,8,768555,2744,17.518,"Predictions reused across perspectives; needs ground-truth MOT evaluation for accuracy."
+intracorporeal,strongsort,ok,8,768555,2744,17.518,"Predictions reused across perspectives; needs ground-truth MOT evaluation for accuracy."
+intraoperative,strongsort,ok,8,768555,2744,17.518,"Predictions reused across perspectives; needs ground-truth MOT evaluation for accuracy."

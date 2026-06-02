@@ -15,8 +15,8 @@ from .cholectrack20 import (
 )
 from .efficientdet_model import (
     EfficientDetConfig,
+    cholec_evaluate_efficientdet,
     evaluate_efficientdet,
-    paper_evaluate_efficientdet,
     train_efficientdet,
 )
 from .metrics import detector_metrics_row, write_detection_metrics, write_tracking_metrics
@@ -445,14 +445,13 @@ def cmd_evaluate_detector(args: argparse.Namespace) -> None:
     cmd_validate_detector(args)
 
 
-def cmd_paper_detection_eval(args: argparse.Namespace) -> None:
+def cmd_cholec_detection_eval(args: argparse.Namespace) -> None:
     if args.detector_backend == "yolo" or _is_yolo_weights(args.weights):
         raise SystemExit(
-            "YOLO paper evaluation is still available with "
-            "`python -m src.paper_detection_eval ...`. The active CLI paper-detection-eval "
-            "is reserved for EfficientDet checkpoints."
+            "This CholecTrack20 detection-eval CLI is reserved for EfficientDet checkpoints. "
+            "Use evaluate-detector for YOLO checkpoints."
         )
-    row = paper_evaluate_efficientdet(
+    row = cholec_evaluate_efficientdet(
         args.weights,
         args.data,
         args.gt_source,
@@ -465,7 +464,7 @@ def cmd_paper_detection_eval(args: argparse.Namespace) -> None:
         args.output,
     )
     _append_experiment_log(
-        "paper-detection-eval",
+        "cholec-detection-eval",
         model=args.model_name,
         checkpoint=args.weights,
         split=args.split,
@@ -589,7 +588,6 @@ def cmd_evaluate_tracking(args: argparse.Namespace) -> None:
         sequence_rows,
         summary_path=args.summary_out,
         sequence_path=args.sequence_out,
-        markdown_path=args.markdown_out,
     )
     for row in summary_rows:
         _append_experiment_log(
@@ -738,19 +736,19 @@ def build_parser() -> argparse.ArgumentParser:
     eval_detector.add_argument("--plots", action="store_true")
     eval_detector.set_defaults(func=cmd_evaluate_detector)
 
-    paper_eval = subparsers.add_parser("paper-detection-eval")
-    paper_eval.add_argument("--weights", required=True)
-    paper_eval.add_argument("--data", default="dataset/yolo_cholecTrack20/cholecTrack20.yaml")
-    paper_eval.add_argument("--gt-source", default="dataset/cholecTrack20")
-    paper_eval.add_argument("--detector-backend", choices=["efficientdet", "yolo", "auto"], default="auto")
-    paper_eval.add_argument("--device", default="0")
-    paper_eval.add_argument("--split", default="val", choices=["train", "val", "test"])
-    paper_eval.add_argument("--imgsz", type=int)
-    paper_eval.add_argument("--batch", type=int, default=4)
-    paper_eval.add_argument("--half", action="store_true")
-    paper_eval.add_argument("--model-name", default="EfficientDet-D0")
-    paper_eval.add_argument("--output", default="results/logs/efficientdet_paper_detection_metrics")
-    paper_eval.set_defaults(func=cmd_paper_detection_eval)
+    cholec_eval = subparsers.add_parser("cholec-detection-eval")
+    cholec_eval.add_argument("--weights", required=True)
+    cholec_eval.add_argument("--data", default="dataset/yolo_cholecTrack20/cholecTrack20.yaml")
+    cholec_eval.add_argument("--gt-source", default="dataset/cholecTrack20")
+    cholec_eval.add_argument("--detector-backend", choices=["efficientdet", "yolo", "auto"], default="auto")
+    cholec_eval.add_argument("--device", default="0")
+    cholec_eval.add_argument("--split", default="val", choices=["train", "val", "test"])
+    cholec_eval.add_argument("--imgsz", type=int)
+    cholec_eval.add_argument("--batch", type=int, default=4)
+    cholec_eval.add_argument("--half", action="store_true")
+    cholec_eval.add_argument("--model-name", default="EfficientDet-D0")
+    cholec_eval.add_argument("--output", default="results/logs/efficientdet_cholec_detection_metrics")
+    cholec_eval.set_defaults(func=cmd_cholec_detection_eval)
 
     track = subparsers.add_parser("track")
     track.add_argument("--weights", required=True)
@@ -801,7 +799,6 @@ def build_parser() -> argparse.ArgumentParser:
     tracking_eval.add_argument("--class-agnostic", action="store_true")
     tracking_eval.add_argument("--summary-out", default="results/logs/tracking_eval_summary.csv")
     tracking_eval.add_argument("--sequence-out", default="results/logs/tracking_eval_by_sequence.csv")
-    tracking_eval.add_argument("--markdown-out", default="EA_STRONGSORT_TRACKING_EVALUATION.md")
     tracking_eval.set_defaults(func=cmd_evaluate_tracking)
 
     ablate = subparsers.add_parser("ablate")

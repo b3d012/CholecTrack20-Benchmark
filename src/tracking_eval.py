@@ -279,11 +279,9 @@ def write_tracking_evaluation(
     *,
     summary_path: str | Path,
     sequence_path: str | Path,
-    markdown_path: str | Path,
 ) -> None:
     _write_csv(summary_path, summary_rows)
     _write_csv(sequence_path, sequence_rows)
-    _write_markdown(markdown_path, summary_rows)
 
 
 def _write_csv(path: str | Path, rows: list[dict[str, object]]) -> None:
@@ -298,30 +296,3 @@ def _write_csv(path: str | Path, rows: list[dict[str, object]]) -> None:
         writer.writerows(rows)
 
 
-def _write_markdown(path: str | Path, rows: list[dict[str, object]]) -> None:
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    columns = [
-        "perspective",
-        "tracker",
-        "sequences",
-        "MOTA",
-        "IDF1",
-        "MOTP",
-        "precision",
-        "recall",
-        "idsw",
-        "fp",
-        "fn",
-    ]
-    lines = [
-        "# Tracking Evaluation Results",
-        "",
-        "Metrics are computed on annotated CholecTrack20 frames only, using IoU >= 0.5 and class-aware matching.",
-        "",
-        "| " + " | ".join(columns) + " |",
-        "| " + " | ".join(["---"] * len(columns)) + " |",
-    ]
-    for row in rows:
-        lines.append("| " + " | ".join(str(row.get(column, "")) for column in columns) + " |")
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")

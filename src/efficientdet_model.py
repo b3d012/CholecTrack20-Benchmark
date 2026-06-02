@@ -17,7 +17,7 @@ import yaml
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset, Subset
 
-from .paper_detection_eval import (
+from .cholec_detection_eval import (
     CHALLENGES,
     CLASS_NAMES,
     _challenge_image_ids,
@@ -616,7 +616,7 @@ def evaluate_efficientdet(
     }
 
 
-def paper_evaluate_efficientdet(
+def cholec_evaluate_efficientdet(
     weights: str | Path,
     data: str | Path,
     source: str | Path,

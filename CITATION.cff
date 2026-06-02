@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this repository or benchmark in your work, please cite it."
+title: "CholecTrack20 Benchmark: YOLO11, EfficientDet-D0, and EA-StrongSORT"
+version: "1.0.0"
+date-released: 2026-06-03
+authors:
+  - family-names: Shamsa
+    given-names: Abdullah
+    email: bedo200216@yahoo.com
+    affiliation: Independent Researcher
+repository-code: "https://github.com/b3d012/DeepLearningProject"
+license: MIT
+keywords:
+  - CholecTrack20
+  - surgical tool detection
+  - object detection
+  - multi-object tracking
+  - EfficientDet
+  - YOLO11
+  - StrongSORT
+abstract: >-
+  A reproducible benchmark repository comparing YOLO11 and EfficientDet-D0 on
+  the CholecTrack20 dataset, with EA-StrongSORT tracking evaluation and
+  compact result summaries designed for public sharing and portfolio use.

@@ -23,6 +23,13 @@ results/weights/*
 *.tmp
 ~$*.docx
 
+# Generated documents and presentation exports
+reports/
+slides/
+*.docx
+*.pptx
+*.pdf
+
 # Python/cache artifacts
 __pycache__/
 *.py[cod]

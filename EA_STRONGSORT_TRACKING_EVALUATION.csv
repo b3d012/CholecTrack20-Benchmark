@@ -1,5 +1,0 @@
-perspective,tracker,sequences,gt,pred,tp,fp,fn,idsw,MOTA,MOTP,IDF1,precision,recall,IDTP,IDFP,IDFN,evaluation_notes
-visibility,strongsort,8,29994,25741,17682,8059,12312,3332,20.974,82.536,24.172,68.692,58.952,6736,19005,23258,"Class-aware IoU>=0.5 on annotated CholecTrack20 frames."
-intracorporeal,strongsort,8,29994,25741,17682,8059,12312,3732,19.641,82.536,12.158,68.692,58.952,3388,22353,26606,"Class-aware IoU>=0.5 on annotated CholecTrack20 frames."
-intraoperative,strongsort,8,29994,25741,17682,8059,12312,3830,19.314,82.536,6.298,68.692,58.952,1755,23986,28239,"Class-aware IoU>=0.5 on annotated CholecTrack20 frames."
-
